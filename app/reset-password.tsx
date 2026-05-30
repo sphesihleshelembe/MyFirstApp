@@ -1,10 +1,15 @@
+console.log("reset-password route active");
 import { useEffect, useState } from 'react';
 import { View, TextInput, Button, Alert, Text } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 
+export const unstable_settings = {
+  initialRouteName: undefined,
+};
 
+console.log("reset-password route active");
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
