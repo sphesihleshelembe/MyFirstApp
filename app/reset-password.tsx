@@ -1,3 +1,7 @@
+import { useEffect, useState } from 'react'; 
+import { View, TextInput, Button, Alert, Text } from 'react-native'; 
+import { supabase } from '@/lib/supabase'; import { router } from 'expo-router'; import * as Linking from 'expo-linking'
+
 useEffect(() => {
   const handleUrl = async (url: string) => {
     try {
