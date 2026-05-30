@@ -23,8 +23,10 @@ useEffect(() => {
       console.log('Incoming URL:', url);
 
       // PKCE FLOW (?code=)
-      const urlObj = new URL(url);
-      const code = urlObj.searchParams.get('code');
+      const getQueryParam = (url: string, key: string) => {
+  const match = url.match(new RegExp(`[?&]${key}=([^&]+)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
