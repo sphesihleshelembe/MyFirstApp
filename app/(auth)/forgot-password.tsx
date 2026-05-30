@@ -13,7 +13,7 @@ export default function ForgotPassword() {
       }
 
 await supabase.auth.resetPasswordForEmail(email, {
-  redirectTo: "https://ai-cv-builder-app-cl4a.bolt.host/reset-password"
+  redirectTo: 'https://ai-cv-builder-app-cl4a.bolt.host/reset-password',
 });
       
       if (error) {
