@@ -1,0 +1,88 @@
+import { Tabs, router } from 'expo-router';
+import { View, StyleSheet } from 'react-native';
+import { Home, FilePlus, FileText, User, Settings } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
+import { colors, radius } from '@/constants/theme';
+
+export default function TabsLayout() {
+  const { session, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !session) {
+      router.replace('/(auth)/login');
+    }
+  }, [session, loading]);
+
+  if (!session) return null;
+
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: colors.primaryLight,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarBackground: () => <View style={styles.tabBarBg} />,
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Create',
+          tabBarIcon: ({ color, size }) => <FilePlus color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="my-cvs"
+        options={{
+          title: 'My CVs',
+          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
+        }}
+      />
+    </Tabs>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: 'transparent',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    height: 64,
+    paddingBottom: 8,
+    paddingTop: 8,
+    elevation: 0,
+  },
+  tabBarBg: {
+    flex: 1,
+    backgroundColor: colors.surface,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+});
