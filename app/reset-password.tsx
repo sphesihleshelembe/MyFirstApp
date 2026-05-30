@@ -17,12 +17,12 @@ export default function ResetPassword() {
   const [sessionReady, setSessionReady] = useState(false);
 
   // 1. HANDLE DEEP LINK + SET SESSION
- useEffect(() => {
+useEffect(() => {
   const handleUrl = async (url: string) => {
     try {
       console.log('Incoming URL:', url);
 
-      // CASE 1: PKCE FLOW (?code=)
+      // PKCE FLOW (?code=)
       const urlObj = new URL(url);
       const code = urlObj.searchParams.get('code');
 
@@ -30,7 +30,6 @@ export default function ResetPassword() {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (error) {
-          console.log('Session error:', error.message);
           Alert.alert('Session Error', error.message);
           return;
         }
@@ -39,7 +38,7 @@ export default function ResetPassword() {
         return;
       }
 
-      // CASE 2: HASH FLOW (#access_token)
+      // HASH FLOW (#access_token)
       const hash = url.split('#')[1];
 
       if (hash) {
@@ -63,38 +62,21 @@ export default function ResetPassword() {
         }
       }
     } catch (err: any) {
-      console.log('Unexpected error:', err);
+      console.log(err);
       Alert.alert('Error', err.message);
     }
-  };
-
-  // IMPORTANT: handle BOTH cases properly
-  const handleDeepLink = (event: { url: string }) => {
-    handleUrl(event.url);
   };
 
   Linking.getInitialURL().then((url) => {
     if (url) handleUrl(url);
   });
 
-  const subscription = Linking.addEventListener('url', handleDeepLink);
+  const subscription = Linking.addEventListener('url', ({ url }) => {
+    handleUrl(url);
+  });
 
-  return () => {
-    subscription.remove();
-  };
+  return () => subscription.remove();
 }, []);
-    // initial open
-    Linking.getInitialURL().then((url) => {
-      if (url) handleUrl(url);
-    });
-
-    // when app is already open
-    const subscription = Linking.addEventListener('url', ({ url }) => {
-      handleUrl(url);
-    });
-
-    return () => subscription.remove();
-  }, []);
 
   // 2. UPDATE PASSWORD
   const updatePassword = async () => {
