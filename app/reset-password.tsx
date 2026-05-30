@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 
-console.log("reset route loaded");
+
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
