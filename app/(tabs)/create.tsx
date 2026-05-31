@@ -53,7 +53,7 @@ import {
 } from '@/lib/storage';
 import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
 import { RewardedAdModal } from '@/components/RewardedAdModal';
-//import { syncCVsToCloud } from '@/utils/syncCVs';
+import { syncCVsToCloud } from '@/lib/syncCVs';
 
 const { width } = Dimensions.get('window');
 
