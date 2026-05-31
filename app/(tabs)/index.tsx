@@ -104,6 +104,7 @@ export default function HomeScreen() {
     Alert.alert('PDF Error', String(error));
   }
 };
+    onPress={() => handleDownload(cv)}
 
     const [cvRes, profileRes] = await Promise.all([
       supabase
