@@ -53,6 +53,7 @@ import {
 } from '@/lib/storage';
 import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
 import { RewardedAdModal } from '@/components/RewardedAdModal';
+import { syncCVsToCloud } from '@/utils/syncCVs';
 
 const { width } = Dimensions.get('window');
 
@@ -106,6 +107,16 @@ export default function CreateScreen() {
       loadDraft();
     }
   }, [cvId]);
+
+  useEffect(() => {
+  const unsubscribe = NetInfo.addEventListener(state => {
+    if (state.isConnected && user?.id) {
+      syncCVsToCloud(user.id);
+    }
+  });
+
+  return () => unsubscribe();
+}, [user]);
 
   const loadDraft = async () => {
     const draft = await getDraftCV();
