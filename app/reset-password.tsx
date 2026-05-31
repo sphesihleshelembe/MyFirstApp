@@ -12,30 +12,58 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
 
-  useEffect(() => {
-    const handleUrl = async (url: string) => {
-      try {
-        console.log('Incoming URL:', url);
+ useEffect(() => {
+  const handleUrl = async (url: string) => {
+    try {
+      console.log('Incoming URL:', url);
 
-        // Handle PKCE flow (?code=...)
-        const getQueryParam = (url: string, key: string) => {
-          const match = url.match(new RegExp(`[?&]${key}=([^&]+)`));
-          return match ? decodeURIComponent(match[1]) : null;
-        };
+      // 1. Try PKCE code flow (signup/login)
+      const getQueryParam = (url: string, key: string) => {
+        const match = url.match(new RegExp(`[?&]${key}=([^&]+)`));
+        return match ? decodeURIComponent(match[1]) : null;
+      };
 
-        const code = getQueryParam(url, 'code');
+      const code = getQueryParam(url, 'code');
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-          if (error) {
-            Alert.alert('Session Error', error.message);
-            return;
-          }
-
-          setSessionReady(true);
+        if (error) {
+          Alert.alert('Session Error', error.message);
           return;
         }
+
+        setSessionReady(true);
+        return;
+      }
+
+      // 2. IMPORTANT FIX: handle password recovery session
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        setSessionReady(true);
+        return;
+      }
+
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
+
+  // run once on mount (important)
+  handleUrl('');
+
+  // listen for auth changes (recovery trigger)
+  const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      setSessionReady(true);
+    }
+  });
+
+  return () => {
+    listener.subscription.unsubscribe();
+  };
+}, []);
 
         // Handle hash flow (#access_token=...&refresh_token=...)
         const hash = url.split('#')[1];
