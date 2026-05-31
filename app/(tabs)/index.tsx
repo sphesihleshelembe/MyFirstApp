@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { downloadCVAsPDF } from '../utils/cvExport';
 import {
   View,
   Text,
