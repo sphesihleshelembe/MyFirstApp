@@ -324,23 +324,17 @@ function getTemplateStyles(template: CVTemplate) {
   }
 }
 
-export function triggerPDFDownload(html: string, filename = 'cv.pdf') {
-  const container = document.createElement('div');
-  container.innerHTML = html;
+export async function triggerPDFDownload(html: string, filename = 'cv.pdf') {
+  try {
+    const { uri } = await Print.printToFileAsync({
+      html,
+    });
 
-   const html2pdf = (await import('html2pdf.js')).default;
-
-  container.style.width = '210mm';
-  container.style.background = 'white';
-
-  html2pdf()
-    .from(container)
-    .set({
-      filename,
-      margin: 10,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    })
-    .save();
+    await Sharing.shareAsync(uri, {
+      UTI: '.pdf',
+      mimeType: 'application/pdf',
+    });
+  } catch (error) {
+    console.log('PDF error:', error);
+  }
 }
