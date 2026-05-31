@@ -1,4 +1,4 @@
-import html2pdf from 'html2pdf.js';
+//import html2pdf from 'html2pdf.js';
 import { CV } from './supabase';
 import { CVTemplate } from './templates';
 
@@ -327,6 +327,8 @@ function getTemplateStyles(template: CVTemplate) {
 export function triggerPDFDownload(html: string, filename = 'cv.pdf') {
   const container = document.createElement('div');
   container.innerHTML = html;
+
+   const html2pdf = (await import('html2pdf.js')).default;
 
   container.style.width = '210mm';
   container.style.background = 'white';
