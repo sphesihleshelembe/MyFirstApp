@@ -20,7 +20,7 @@ export const downloadCVAsPDF = async (cv: any) => {
     </head>
 
     <body>
-      <h1>CURRICULUM VITAE OF ${cv.full_name || ''}</h1>
+      <h1>Curriculum Vitae Of ${cv.full_name || ''}</h1>
 
       <div class="section">
         <p><b>Email:</b> ${cv.email || ''}</p>
