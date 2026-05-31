@@ -391,6 +391,7 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
           <View style={styles.cvCardHeader}>
             <FileText color={colors.white} size={isLarge ? 28 : 22} />
           </View>
+          
           <View style={styles.cvCardContent}>
             <Text style={[styles.cvCardTitle, isLarge && { fontSize: 18 }]} numberOfLines={1}>{cv.title}</Text>
             <Text style={styles.cvCardMeta}>{TEMPLATE_NAMES[cv.template_id] || 'Classic'}</Text>
