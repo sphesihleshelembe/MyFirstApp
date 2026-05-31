@@ -36,7 +36,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
-import { downloadCVAsPDF } from '../utils/cvExport';
+import { downloadCVAsPDF } from '@/utils/cvExport';
+
 
 const { width } = Dimensions.get('window');
 
@@ -386,7 +387,7 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
             <Text style={styles.cvCardMeta}>{TEMPLATE_NAMES[cv.template_id] || 'Classic'}</Text>
             <Text style={styles.cvCardDate}>{timeAgo(cv.updated_at)}</Text>
             <TouchableOpacity
-    onPress={() => downloadCVAsPDF(cv)}
+   onPress={() => downloadCV(cv)}
     style={{
       marginTop: 10,
       backgroundColor: 'rgba(255,255,255,0.2)',
