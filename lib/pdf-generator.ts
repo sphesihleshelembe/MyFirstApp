@@ -226,13 +226,33 @@ function getTemplateStyles(template: CVTemplate) {
   }
 }
 
-export function triggerPDFDownload(html: string, filename: string = 'cv.pdf'): void {
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
+export function triggerPDFDownload(
+  html: string,
+  filename: string = 'cv.pdf'
+): void {
+  const container = document.createElement('div');
+  container.innerHTML = html;
+
+  html2pdf()
+    .from(container)
+    .set({
+      filename,
+      margin: 10,
+      image: {
+        type: 'jpeg',
+        quality: 0.98,
+      },
+      html2canvas: {
+        scale: 2,
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+      },
+    })
+    .save();
+
     };
   }
 }
