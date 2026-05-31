@@ -89,10 +89,17 @@ export default function HomeScreen() {
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  import { CV_TEMPLATES } from '@/lib/templates';
 
+  const template = CV_TEMPLATES.find(t => t.id === cv.template_id) || CV_TEMPLATES[0];
+  
    const handleDownload = async (cv: CV) => {
     try {
-      await downloadCVAsPDF(cv);
+      const template =
+      CV_TEMPLATES.find(t => t.id === cv.template_id) ||
+      CV_TEMPLATES[0];
+      
+     await downloadCVAsPDF(cv, template);
     } catch (error) {
       console.error('PDF Error:', error);
       Alert.alert('PDF Error', String(error));
