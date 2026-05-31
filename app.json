@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ai.cv.builder/app",
+    "name": "ai.cv.builder.app",
     "slug": "cv-builder",
     "version": "1.0.0",
     "orientation": "portrait",
