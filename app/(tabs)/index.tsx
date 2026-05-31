@@ -387,7 +387,7 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
             <Text style={styles.cvCardMeta}>{TEMPLATE_NAMES[cv.template_id] || 'Classic'}</Text>
             <Text style={styles.cvCardDate}>{timeAgo(cv.updated_at)}</Text>
             <TouchableOpacity
-   onPress={() => downloadCV(cv)}
+   onPress={() => downloadCVAsPDF(cv)}
     style={{
       marginTop: 10,
       backgroundColor: 'rgba(255,255,255,0.2)',
