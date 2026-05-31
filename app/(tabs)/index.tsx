@@ -90,21 +90,20 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+   const handleDownload = async (cv: CV) => {
+    try {
+      await downloadCVAsPDF(cv);
+    } catch (error) {
+      console.error('PDF Error:', error);
+      Alert.alert('PDF Error', String(error));
+    }
+  };
+
  const fetchData = async () => {
   try {
     if (!user) return;
 
     setLoading(true);
-
-    const handleDownload = async (cv: CV) => {
-  try {
-    await downloadCVAsPDF(cv);
-  } catch (error) {
-    console.error('PDF Error:', error);
-    Alert.alert('PDF Error', String(error));
-  }
-};
-    onPress={() => handleDownload(cv)}
 
     const [cvRes, profileRes] = await Promise.all([
       supabase
