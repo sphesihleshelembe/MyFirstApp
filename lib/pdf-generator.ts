@@ -1,5 +1,6 @@
 import { CV } from './supabase';
 import { CVTemplate } from './templates';
+import html2pdf from 'html2pdf.js';
 
 export function generatePDFHtml(cv: CV, template: CVTemplate): string {
   const skillsList = cv.skills?.join(' | ') || '';
