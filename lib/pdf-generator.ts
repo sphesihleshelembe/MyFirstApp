@@ -239,10 +239,10 @@ ${layout === 'sidebar' ? `
   <div class="content">
 `}
 
-      <div class="section">
-        <div class="section-title">Experience</div>
-        ${experienceHtml}
-      </div>
+  <div class="section">
+  <div class="section-title">Experience</div>
+  ${experienceHtml}
+</div>
       
           : ''
       }
