@@ -228,20 +228,22 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
     
 ${layout === 'sidebar' ? `
   <div class="layout-sidebar">
+
     <div class="sidebar">
       <h3>Skills</h3>
       ${(cv.skills || []).map(s => `<div>${s}</div>`).join('')}
     </div>
 
     <div class="main">
-` : `<div class="content">`}
-     
+` : `
+  <div class="content">
+`}
 
       <div class="section">
         <div class="section-title">Experience</div>
         ${experienceHtml}
       </div>
-      `
+      
           : ''
       }
 
