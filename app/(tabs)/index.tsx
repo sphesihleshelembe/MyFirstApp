@@ -399,24 +399,24 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
               
 <TouchableOpacity
   onPress={() => handleDownload(cv)}
+  style={{
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: 'center',
+  }}
+>
+  <Text
     style={{
-      marginTop: 10,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      paddingVertical: 6,
-      borderRadius: 8,
-      alignItems: 'center',
-    }} 
-   </TouchableOpacity>
-    <Text
-      style={{
-        color: 'white',
-        fontSize: 11,
-        fontWeight: '600',
-      }}
-    >
-      Download PDF
-    </Text>
-  </TouchableOpacity>
+      color: 'white',
+      fontSize: 11,
+      fontWeight: '600',
+    }}
+  >
+    Download PDF
+  </Text>
+</TouchableOpacity>
 </View>
         </LinearGradient>
       </TouchableOpacity>
