@@ -5,27 +5,27 @@ import { supabase } from '@/lib/supabase';
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
 
-  const handleReset = async () => {
-    try {
-      if (!email) {
-        Alert.alert('Error', 'Please enter your email');
-        return;
-      }
-
-await supabase.auth.resetPasswordForEmail(email, {
-  redirectTo: 'https://ai-cv-builder-app-cl4a.bolt.host/reset-password',
-});
-      
-      if (error) {
-        Alert.alert('Error', error.message);
-        return;
-      }
-
-      Alert.alert('Success', 'Password reset link sent to your email');
-    } catch (err) {
-      console.log(err);
+const handleReset = async () => {
+  try {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email');
+      return;
     }
-  };
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://ai-cv-builder-app-cl4a.bolt.host/reset-password',
+    });
+
+    if (error) {
+      Alert.alert('Error', error.message);
+      return;
+    }
+
+    Alert.alert('Success', 'Password reset email sent');
+  } catch (err: any) {
+    Alert.alert('Error', err.message);
+  }
+};
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
