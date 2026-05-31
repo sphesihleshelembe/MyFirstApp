@@ -86,3 +86,5 @@ await Sharing.shareAsync(uri, {
   mimeType: 'application/pdf',
   dialogTitle: 'Download CV',
 });
+
+};
