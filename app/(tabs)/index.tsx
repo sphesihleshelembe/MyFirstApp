@@ -36,7 +36,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
-//import { downloadCVAsPDF } from '../utils/cvExport';
+import { downloadCVAsPDF } from '../utils/cvExport';
 
 const { width } = Dimensions.get('window');
 
