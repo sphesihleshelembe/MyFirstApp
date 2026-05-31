@@ -91,9 +91,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  downloadCVAsPDF(cv, template)
-
   const template = CV_TEMPLATES.find(t => t.id === cv.template_id) || CV_TEMPLATES[0];
+  downloadCVAsPDF(cv, template)
   
    const handleDownload = async (cv: CV) => {
     try {
