@@ -267,7 +267,7 @@ ${layout === 'sidebar' ? `
           : ''
       }
 
-    </div>
+    ${layout === 'sidebar' ? `</div></div>` : `</div>`}
   </div>
 </body>
 </html>
