@@ -387,7 +387,7 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
             <Text style={styles.cvCardMeta}>{TEMPLATE_NAMES[cv.template_id] || 'Classic'}</Text>
             <Text style={styles.cvCardDate}>{timeAgo(cv.updated_at)}</Text>
             <TouchableOpacity
-   onPress={() => downloadCVAsPDF(cv)}
+  onPress={() => handleDownload(cv)}
     style={{
       marginTop: 10,
       backgroundColor: 'rgba(255,255,255,0.2)',
@@ -395,6 +395,14 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
       borderRadius: 8,
       alignItems: 'center',
     }}
+              const handleDownload = async (cv: CV) => {
+  try {
+    await downloadCVAsPDF(cv);
+  } catch (error) {
+    console.error('PDF Error:', error);
+    Alert.alert('PDF Error', String(error));
+  }
+};
   >
     <Text
       style={{
