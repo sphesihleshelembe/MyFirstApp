@@ -38,6 +38,7 @@ import { supabase, CV } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
 import { downloadCVAsPDF } from '@/utils/cvExport';
 import { Alert } from 'react-native';
+import { CV_TEMPLATES } from '@/lib/templates';
 
 const { width } = Dimensions.get('window');
 
@@ -89,7 +90,7 @@ export default function HomeScreen() {
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  import { CV_TEMPLATES } from '@/lib/templates';
+  
 
   const template = CV_TEMPLATES.find(t => t.id === cv.template_id) || CV_TEMPLATES[0];
   
