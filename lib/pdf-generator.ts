@@ -225,7 +225,6 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
     </div>
 
     <div class="content"> 
-    
 ${layout === 'sidebar' ? `
   <div class="layout-sidebar">
 
@@ -235,33 +234,52 @@ ${layout === 'sidebar' ? `
     </div>
 
     <div class="main">
-` : `
-  <div class="content">
-`}
 
-  <div class="section">
-  <div class="section-title">Experience</div>
-  ${experienceHtml}
-</div>
-
+      <div class="section">
+        <div class="section-title">Experience</div>
+        ${experienceHtml}
+      </div>
 
       ${(cv.education || []).length ? `
-<div class="section">
-  <div class="section-title">Education</div>
-  ${educationHtml}
-</div>
-` : ''}
+      <div class="section">
+        <div class="section-title">Education</div>
+        ${educationHtml}
+      </div>
+      ` : ''}
 
-      ${
-        (cv.references_data || []).length
-          ? `
+      ${(cv.references_data || []).length ? `
       <div class="section">
         <div class="section-title">References</div>
         ${referencesHtml}
       </div>
-      `
-          : ''
-      }
+      ` : ''}
+
+    </div> <!-- close main -->
+  </div> <!-- close layout-sidebar -->
+` : `
+  <div class="content">
+
+    <div class="section">
+      <div class="section-title">Experience</div>
+      ${experienceHtml}
+    </div>
+
+    ${(cv.education || []).length ? `
+    <div class="section">
+      <div class="section-title">Education</div>
+      ${educationHtml}
+    </div>
+    ` : ''}
+
+    ${(cv.references_data || []).length ? `
+    <div class="section">
+      <div class="section-title">References</div>
+      ${referencesHtml}
+    </div>
+    ` : ''}
+
+  </div>
+`}    
 
     ${layout === 'sidebar' ? `</div></div>` : `</div>`}
     
