@@ -1,6 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '@/lib/supabase';
-import { getUnsyncedCVs, markCVAsSynced } from './cvStorage';
+import { getUnsyncedCVs, markCVAsSynced } from '@/lib/cvStorage';
 
 /**
  * Sync local CVs → Supabase
