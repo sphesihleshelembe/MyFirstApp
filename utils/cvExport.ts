@@ -20,9 +20,7 @@ export const downloadCVAsPDF = async (cv: any) => {
     </head>
 
     <body>
-      <h1 style="margin-bottom: 5px;">
-        CURRICULUM VITAE OF ${cv.full_name || ''}
-      </h1>
+      <h1>CURRICULUM VITAE OF ${cv.full_name || ''}</h1>
 
       <div class="section">
         <p><b>Email:</b> ${cv.email || ''}</p>
@@ -38,26 +36,26 @@ export const downloadCVAsPDF = async (cv: any) => {
       <div class="section">
         <h2>Skills</h2>
         <ul>
-          ${(cv.skills || []).map(skill => `<li>${skill}</li>`).join('')}
+          ${(cv.skills || []).map((skill: string) => `<li>${skill}</li>`).join('')}
         </ul>
       </div>
 
       <div class="section">
         <h2>Education</h2>
-        ${(cv.education || []).map(e => `
+        ${(cv.education || []).map((e: any) => `
           <p>
             <b>${e.institution || ''}</b><br/>
-            ${e.degree || ''} (${e.startDate || ''} - ${e.endDate || ''})
+            ${e.degree || ''} (${e.start_year || ''} - ${e.end_year || ''})
           </p>
         `).join('')}
       </div>
 
       <div class="section">
         <h2>Work Experience</h2>
-        ${(cv.work_experience || []).map(w => `
+        ${(cv.work_experience || []).map((w: any) => `
           <p>
             <b>${w.company || ''}</b><br/>
-            ${w.position || ''} (${w.startDate || ''} - ${w.endDate || ''})<br/>
+            ${w.position || ''} (${w.start_date || ''} - ${w.current ? 'Present' : w.end_date || ''})<br/>
             ${w.description || ''}
           </p>
         `).join('')}
@@ -65,9 +63,9 @@ export const downloadCVAsPDF = async (cv: any) => {
 
       <div class="section">
         <h2>References</h2>
-        ${(cv.references_data || []).map(r => `
+        ${(cv.references_data || []).map((r: any) => `
           <p>
-            <b>${r.name || ''}</b> - ${r.contact || ''}
+            <b>${r.name || ''}</b> - ${r.email || r.contact || ''}
           </p>
         `).join('')}
       </div>
@@ -78,7 +76,10 @@ export const downloadCVAsPDF = async (cv: any) => {
   const { uri } = await Print.printToFileAsync({ html });
 
   if (Platform.OS === 'web') {
-    console.log('PDF URI:', uri);
+    const a = document.createElement('a');
+    a.href = uri;
+    a.download = `${cv.full_name || 'cv'}.pdf`;
+    a.click();
     return;
   }
 
