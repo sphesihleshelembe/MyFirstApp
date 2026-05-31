@@ -1,5 +1,6 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { Platform } from 'react-native';
 
 export const downloadCVAsPDF = async (cv) => {
   const html = `
@@ -76,8 +77,12 @@ export const downloadCVAsPDF = async (cv) => {
 
   const { uri } = await Print.printToFileAsync({ html });
 
-  await Sharing.shareAsync(uri, {
-    mimeType: 'application/pdf',
-    dialogTitle: 'Download CV',
-  });
-};
+if (Platform.OS === 'web') {
+  console.log('PDF URI:', uri);
+  return;
+}
+
+await Sharing.shareAsync(uri, {
+  mimeType: 'application/pdf',
+  dialogTitle: 'Download CV',
+});
