@@ -27,22 +27,30 @@ export const saveCVs = async (cvs: any[]) => {
 };
 
 /**
- * Add a new CV
+ * Add a new CV (always starts as NOT synced)
  */
 export const addCV = async (cv: any) => {
   const cvs = await getCVs();
-  const updated = [...cvs, cv];
+
+  const newCV = {
+    ...cv,
+    synced: false, // 🔥 important for sync system
+  };
+
+  const updated = [...cvs, newCV];
   await saveCVs(updated);
 };
 
 /**
- * Update a CV
+ * Update a CV (mark as NOT synced again)
  */
 export const updateCV = async (updatedCV: any) => {
   const cvs = await getCVs();
 
   const updated = cvs.map((cv: any) =>
-    cv.id === updatedCV.id ? updatedCV : cv
+    cv.id === updatedCV.id
+      ? { ...updatedCV, synced: false } // 🔥 forces re-sync
+      : cv
   );
 
   await saveCVs(updated);
@@ -57,4 +65,25 @@ export const deleteCV = async (id: string) => {
   const filtered = cvs.filter((cv: any) => cv.id !== id);
 
   await saveCVs(filtered);
+};
+
+/**
+ * Mark a CV as synced (call this AFTER successful Supabase upload)
+ */
+export const markCVAsSynced = async (id: string) => {
+  const cvs = await getCVs();
+
+  const updated = cvs.map((cv: any) =>
+    cv.id === id ? { ...cv, synced: true } : cv
+  );
+
+  await saveCVs(updated);
+};
+
+/**
+ * Get only unsynced CVs (used by sync function)
+ */
+export const getUnsyncedCVs = async () => {
+  const cvs = await getCVs();
+  return cvs.filter((cv: any) => !cv.synced);
 };
