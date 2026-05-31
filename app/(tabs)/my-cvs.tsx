@@ -27,6 +27,8 @@ import { FileText, Plus, Trash2, Edit, Download, Folder, Clock, Layers } from 'l
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
+import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
+import { getTemplateById } from '@/lib/templates';
 
 const { width } = Dimensions.get('window');
 
@@ -83,22 +85,26 @@ export default function MyCVsScreen() {
       },
     ]);
   };
+const downloadCV = async (cv: CV) => {
+  if (Platform.OS !== 'web') {
+    Alert.alert('Download', 'PDF download currently works on web.');
+    return;
+  }
 
-  const downloadCV = (cv: CV) => {
-    if (Platform.OS === 'web') {
-      const html = generateCVHTML(cv);
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${cv.title || 'CV'}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else {
-      Alert.alert('Download', 'Open on web to download');
-    }
-  };
+  try {
+    const template = getTemplateById(cv.template_id || 'classic');
 
+    const html = generatePDFHtml(cv, template);
+
+    await triggerPDFDownload(
+      html,
+      `${cv.title?.replace(/\s+/g, '-') || 'cv'}.pdf`
+    );
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Failed to generate PDF');
+  }
+};
   const filteredCVs = filter ? cvs.filter(c => c.template_id === filter) : cvs;
   const templatesUsed = [...new Set(cvs.map(c => c.template_id))];
 
@@ -312,46 +318,6 @@ function EmptyState({ filter, onPress }: { filter: string | null; onPress: () =>
       </Animated.View>
     </View>
   );
-}
-
-function generateCVHTML(cv: CV): string {
-  const skills = (cv.skills || []).join(', ');
-  const education = (cv.education || []).map((e: any) =>
-    `<div class="entry"><h3>${e.degree} in ${e.field}</h3><p class="inst">${e.institution} | ${e.start_year} - ${e.end_year}</p><p>${e.description}</p></div>`
-  ).join('');
-  const experience = (cv.work_experience || []).map((e: any) =>
-    `<div class="entry"><h3>${e.position}</h3><p class="inst">${e.company} | ${e.start_date} - ${e.current ? 'Present' : e.end_date}</p><p>${e.description}</p></div>`
-  ).join('');
-  const refs = (cv.references_data || []).map((r: any) =>
-    `<div class="ref"><strong>${r.name}</strong> - ${r.position} at ${r.company}<br>${r.email} | ${r.phone}</div>`
-  ).join('');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>${cv.title}</title>
-<style>
-  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 40px; color: #1a1a1a; line-height: 1.6; }
-  h1 { font-size: 2em; margin: 0; color: #1D4ED8; }
-  .contact { color: #555; margin: 8px 0 24px; font-size: 0.9em; }
-  h2 { border-bottom: 2px solid #1D4ED8; color: #1D4ED8; padding-bottom: 4px; margin-top: 28px; }
-  .entry { margin-bottom: 16px; }
-  .entry h3 { margin: 0 0 2px; font-size: 1.05em; }
-  .inst { color: #555; font-style: italic; margin: 0 0 4px; font-size: 0.9em; }
-  .skills { display: flex; flex-wrap: wrap; gap: 8px; }
-  .skill { background: #EFF6FF; color: #1D4ED8; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
-  .ref { margin-bottom: 12px; padding: 12px; background: #F8FAFC; border-radius: 6px; }
-</style>
-</head>
-<body>
-  <h1>${cv.full_name || 'Professional CV'}</h1>
-  <p class="contact">${[cv.email, cv.phone, cv.address].filter(Boolean).join(' | ')}</p>
-  ${cv.summary ? `<h2>Professional Summary</h2><p>${cv.summary}</p>` : ''}
-  ${skills ? `<h2>Skills</h2><div class="skills">${(cv.skills || []).map(s => `<span class="skill">${s}</span>`).join('')}</div>` : ''}
-  ${experience ? `<h2>Work Experience</h2>${experience}` : ''}
-  ${education ? `<h2>Education</h2>${education}` : ''}
-  ${refs ? `<h2>References</h2>${refs}` : ''}
-</body>
-</html>`;
 }
 
 const styles = StyleSheet.create({
