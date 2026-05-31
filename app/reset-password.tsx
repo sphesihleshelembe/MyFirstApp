@@ -1,113 +1,41 @@
-console.log("reset-password route active");
 import { useEffect, useState } from 'react';
 import { View, TextInput, Button, Alert, Text } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
-import * as Linking from 'expo-linking';
-
-console.log('reset-password route active');
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
 
- useEffect(() => {
-  const handleUrl = async (url: string) => {
-    try {
-      console.log('Incoming URL:', url);
+  useEffect(() => {
+    const init = async () => {
+      console.log('Reset password screen loaded');
 
-      // 1. Try PKCE code flow (signup/login)
-      const getQueryParam = (url: string, key: string) => {
-        const match = url.match(new RegExp(`[?&]${key}=([^&]+)`));
-        return match ? decodeURIComponent(match[1]) : null;
-      };
-
-      const code = getQueryParam(url, 'code');
-
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-          Alert.alert('Session Error', error.message);
-          return;
-        }
-
-        setSessionReady(true);
-        return;
-      }
-
-      // 2. IMPORTANT FIX: handle password recovery session
+      // Check if Supabase already created a recovery session
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
+        console.log('Recovery session exists');
         setSessionReady(true);
-        return;
-      }
-
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
-    }
-  };
-
-  // run once on mount (important)
-  handleUrl('');
-
-  // listen for auth changes (recovery trigger)
-  const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      setSessionReady(true);
-    }
-  });
-
-  return () => {
-    listener.subscription.unsubscribe();
-  };
-}, []);
-
-        // Handle hash flow (#access_token=...&refresh_token=...)
-        const hash = url.split('#')[1];
-
-        if (hash) {
-          const params = new URLSearchParams(hash);
-
-          const access_token = params.get('access_token');
-          const refresh_token = params.get('refresh_token');
-
-          if (access_token && refresh_token) {
-            const { error } = await supabase.auth.setSession({
-              access_token,
-              refresh_token,
-            });
-
-            if (error) {
-              Alert.alert('Session Error', error.message);
-              return;
-            }
-
-            setSessionReady(true);
-            return;
-          }
-        }
-
-        console.log('No valid reset parameters found');
-      } catch (err: any) {
-        console.log('Unexpected error:', err);
-        Alert.alert('Error', err.message || 'Something went wrong');
       }
     };
 
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        handleUrl(url);
+    init();
+
+    // Listen for Supabase recovery event (THIS is the key)
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      console.log('Auth event:', event);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('Recovery mode activated');
+        setSessionReady(true);
       }
     });
 
-    const subscription = Linking.addEventListener('url', ({ url }) => {
-      handleUrl(url);
-    });
-
-    return () => subscription.remove();
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const updatePassword = async () => {
@@ -136,18 +64,12 @@ export default function ResetPassword() {
 
   return (
     <View style={{ padding: 20 }}>
-      <Text
-        style={{
-          fontSize: 18,
-          fontWeight: 'bold',
-          marginBottom: 10,
-        }}
-      >
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
         Reset Password
       </Text>
 
       {!sessionReady ? (
-        <Text style={{ marginBottom: 10, color: 'gray' }}>
+        <Text style={{ color: 'gray' }}>
           Waiting for reset link...
         </Text>
       ) : (
