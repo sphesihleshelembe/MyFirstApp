@@ -3,7 +3,7 @@ import { CV } from './supabase';
 import { CVTemplate } from './templates';
 
 export function generatePDFHtml(cv: CV, template: CVTemplate): string {
-  const skillsList = (cv.skills || []).join(' | ');
+  const layout = template.layout || 'single';
 
   const educationHtml = (cv.education || [])
     .map(
@@ -78,6 +78,20 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
   <title>${cv.title || 'CV'}</title>
 
   <style>
+  .layout-sidebar {
+  display: flex;
+}
+
+.layout-sidebar .sidebar {
+  width: 30%;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.layout-sidebar .main {
+  width: 70%;
+  padding: 20px;
+}
     * {
       margin: 0;
       padding: 0;
@@ -199,7 +213,7 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
 </head>
 
 <body>
-  <div class="cv-container">
+  <div class="cv-container layout-${layout}">
 
     <div class="header">
       <div class="name">${cv.full_name || 'Your Name'}</div>
@@ -210,37 +224,19 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
       </div>
     </div>
 
-    <div class="content">
+    <div class="content"> 
+    
+${layout === 'sidebar' ? `
+  <div class="layout-sidebar">
+    <div class="sidebar">
+      <h3>Skills</h3>
+      ${(cv.skills || []).map(s => `<div>${s}</div>`).join('')}
+    </div>
 
-      ${
-        cv.summary
-          ? `
-      <div class="section">
-        <div class="section-title">Summary</div>
-        <div>${cv.summary}</div>
-      </div>
-      `
-          : ''
-      }
+    <div class="main">
+` : `<div class="content">`}
+     
 
-      ${
-        (cv.skills || []).length
-          ? `
-      <div class="section">
-        <div class="section-title">Skills</div>
-        <div class="skills-container">
-          ${(cv.skills || [])
-            .map((s) => `<div class="skill-tag">${s}</div>`)
-            .join('')}
-        </div>
-      </div>
-      `
-          : ''
-      }
-
-      ${
-        (cv.work_experience || []).length
-          ? `
       <div class="section">
         <div class="section-title">Experience</div>
         ${experienceHtml}
@@ -253,11 +249,11 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
         (cv.education || []).length
           ? `
       <div class="section">
-        <div class="section-title">Education</div>
+       <div class="section-title">Education</div>
         ${educationHtml}
       </div>
       `
-          : ''
+          : '
       }
 
       ${
