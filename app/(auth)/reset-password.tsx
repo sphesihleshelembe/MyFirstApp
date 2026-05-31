@@ -5,42 +5,50 @@ import { router } from 'expo-router';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(true); // start locked until session check completes
+  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  // 1. VERIFY SESSION EXISTS (VERY IMPORTANT)
+  // 🔥 FIX: Force Supabase session hydration after verify redirect
   useEffect(() => {
-    const checkSession = async () => {
+    const initSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        // 1. Force refresh session (IMPORTANT for Expo Web + verify flow)
+        const { error: refreshError } = await supabase.auth.refreshSession();
 
-        if (error) {
-          console.log('Session error:', error.message);
-          Alert.alert('Error', 'Session error. Please try again.');
-          router.replace('/(auth)/login');
-          return;
+        if (refreshError) {
+          console.log('Refresh error:', refreshError.message);
         }
 
+        // 2. Now check session
+        const { data } = await supabase.auth.getSession();
+
+        console.log('SESSION CHECK:', data.session);
+
+        // 3. If no session → invalid or expired reset link
         if (!data.session) {
-          console.log('No session found');
-          Alert.alert('Error', 'Reset session not found or expired.');
+          Alert.alert(
+            'Reset link invalid',
+            'Your reset link is invalid or expired. Please request a new one.'
+          );
+
           router.replace('/(auth)/login');
           return;
         }
 
-        console.log('Recovery session active');
+        // 4. Session OK → allow password reset
         setLoading(false);
       } catch (err: any) {
-        console.log('Unexpected error:', err.message);
-        Alert.alert('Error', 'Something went wrong.');
+        console.log('Init error:', err.message);
+
+        Alert.alert('Error', 'Something went wrong. Please try again.');
         router.replace('/(auth)/login');
       }
     };
 
-    checkSession();
+    initSession();
   }, []);
 
-  // 2. UPDATE PASSWORD
+  // 🔥 UPDATE PASSWORD
   const updatePassword = async () => {
     if (!password || password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
@@ -62,7 +70,7 @@ export default function ResetPassword() {
 
       Alert.alert('Success', 'Password updated successfully');
 
-      // optional: sign out to fully clear recovery session
+      // clean logout after reset (important for recovery sessions)
       await supabase.auth.signOut();
 
       router.replace('/(auth)/login');
@@ -74,11 +82,11 @@ export default function ResetPassword() {
     }
   };
 
-  // 3. LOADING STATE
+  // 🔥 LOADING STATE
   if (loading) {
     return (
       <View style={{ padding: 20 }}>
-        <Text>Checking reset session...</Text>
+        <Text>Verifying reset link...</Text>
       </View>
     );
   }
@@ -107,7 +115,7 @@ export default function ResetPassword() {
       />
 
       <Button
-        title={updating ? "Updating..." : "Update Password"}
+        title={updating ? 'Updating...' : 'Update Password'}
         onPress={updatePassword}
       />
     </View>
