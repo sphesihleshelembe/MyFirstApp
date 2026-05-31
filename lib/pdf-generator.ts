@@ -324,17 +324,37 @@ function getTemplateStyles(template: CVTemplate) {
   }
 }
 
-export async function triggerPDFDownload(html: string, filename = 'cv.pdf') {
-  try {
-    const { uri } = await Print.printToFileAsync({
-      html,
-    });
+export async function triggerPDFDownload(
+  html: string,
+  filename = 'cv.pdf'
+) {
+   if (typeof window === 'undefined') return;
 
-    await Sharing.shareAsync(uri, {
-      UTI: '.pdf',
-      mimeType: 'application/pdf',
-    });
-  } catch (error) {
-    console.log('PDF error:', error);
-  }
+  const html2pdf = (await import('html2pdf.js')).default;
+
+  const container = document.createElement('div');
+  container.innerHTML = html;
+
+  container.style.width = '210mm';
+  container.style.background = 'white';
+
+  await html2pdf()
+    .from(container)
+    .set({
+      filename,
+      margin: 10,
+      image: {
+        type: 'jpeg',
+        quality: 0.98,
+      },
+      html2canvas: {
+        scale: 2,
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+      },
+    })
+    .save();
 }
