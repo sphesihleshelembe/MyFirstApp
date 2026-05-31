@@ -9,33 +9,32 @@ export default function ResetPassword() {
   const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    const init = async () => {
-      console.log('Reset password screen loaded');
+    const checkSession = async () => {
+      console.log("Checking Supabase session...");
 
-      // Check if Supabase already created a recovery session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
 
-      if (session) {
-        console.log('Recovery session exists');
+      if (error) {
+        console.log("Session error:", error.message);
+        return;
+      }
+
+      if (data?.session) {
+        console.log("Session FOUND");
         setSessionReady(true);
+      } else {
+        console.log("No session yet");
       }
     };
 
-    init();
+    checkSession();
 
-    // Listen for Supabase recovery event (THIS is the key)
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      console.log('Auth event:', event);
+    // retry once after short delay (important for email redirect timing)
+    const timer = setTimeout(() => {
+      checkSession();
+    }, 1500);
 
-      if (event === 'PASSWORD_RECOVERY') {
-        console.log('Recovery mode activated');
-        setSessionReady(true);
-      }
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const updatePassword = async () => {
