@@ -373,6 +373,15 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
     transform: [{ scale: scale.value }],
   }));
 
+  const handleDownload = async (cv: CV) => {
+  try {
+    await downloadCVAsPDF(cv);
+  } catch (error) {
+    console.error('PDF Error:', error);
+    Alert.alert('PDF Error', String(error));
+  }
+};
+
   return (
     <Animated.View style={animatedStyle}>
       <TouchableOpacity
