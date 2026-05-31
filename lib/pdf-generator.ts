@@ -243,9 +243,7 @@ ${layout === 'sidebar' ? `
   <div class="section-title">Experience</div>
   ${experienceHtml}
 </div>
-      
-          : ''
-      }
+
 
       ${
         (cv.education || []).length
