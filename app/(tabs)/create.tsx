@@ -54,6 +54,7 @@ import {
 import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
 import { RewardedAdModal } from '@/components/RewardedAdModal';
 import { syncCVsToCloud } from '@/lib/syncCVs';
+import NetInfo from '@react-native-community/netinfo';
 
 const { width } = Dimensions.get('window');
 
