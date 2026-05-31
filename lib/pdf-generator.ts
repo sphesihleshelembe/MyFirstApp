@@ -245,16 +245,12 @@ ${layout === 'sidebar' ? `
 </div>
 
 
-      ${
-        (cv.education || []).length
-          ? `
-      <div class="section">
-       <div class="section-title">Education</div>
-        ${educationHtml}
-      </div>
-      `
-          : '
-      }
+      ${(cv.education || []).length ? `
+<div class="section">
+  <div class="section-title">Education</div>
+  ${educationHtml}
+</div>
+` : ''}
 
       ${
         (cv.references_data || []).length
