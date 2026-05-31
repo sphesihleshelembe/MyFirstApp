@@ -254,6 +254,6 @@ export function triggerPDFDownload(
     })
     .save();
 
-    };
-  }
-}
+    }
+  
+
