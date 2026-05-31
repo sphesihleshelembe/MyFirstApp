@@ -90,7 +90,8 @@ export default function HomeScreen() {
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
+  downloadCVAsPDF(cv, template)
 
   const template = CV_TEMPLATES.find(t => t.id === cv.template_id) || CV_TEMPLATES[0];
   
