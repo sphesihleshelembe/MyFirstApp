@@ -109,15 +109,6 @@ export default function CreateScreen() {
     }
   }, [cvId]);
 
-  useEffect(() => {
-  const unsubscribe = NetInfo.addEventListener(state => {
-    if (state.isConnected && user?.id) {
-      syncLocalToSupabase(user.id);
-    }
-  });
-
-  return () => unsubscribe();
-}, [user]);
 
   useEffect(() => {
   const unsubscribe = NetInfo.addEventListener(state => {
