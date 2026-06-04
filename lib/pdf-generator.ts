@@ -1,9 +1,26 @@
-//import html2pdf from 'html2pdf.js';
 import { CV } from './supabase';
 import { CVTemplate } from './templates';
 
 export function generatePDFHtml(cv: CV, template: CVTemplate): string {
   const layout = template.layout || 'single';
+
+  const skillsHtml = (cv.skills || []).length
+    ? `<div class="section">
+        <div class="section-title">Skills</div>
+        <div class="skills-container">
+          ${(cv.skills || [])
+            .map((skill) => `<span class="skill-tag">${skill}</span>`)
+            .join('')}
+        </div>
+      </div>`
+    : '';
+
+  const summaryHtml = cv.summary
+    ? `<div class="section">
+        <div class="section-title">Professional Summary</div>
+        <div class="summary-text">${cv.summary}</div>
+      </div>`
+    : '';
 
   const educationHtml = (cv.education || [])
     .map(
@@ -68,7 +85,65 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
     )
     .join('');
 
+  const experienceSection = (cv.work_experience || []).length
+    ? `<div class="section">
+        <div class="section-title">Experience</div>
+        ${experienceHtml}
+      </div>`
+    : '';
+
+  const educationSection = (cv.education || []).length
+    ? `<div class="section">
+        <div class="section-title">Education</div>
+        ${educationHtml}
+      </div>`
+    : '';
+
+  const referencesSection = (cv.references_data || []).length
+    ? `<div class="section">
+        <div class="section-title">References</div>
+        ${referencesHtml}
+      </div>`
+    : '';
+
   const templateStyles = getTemplateStyles(template);
+
+  let bodyContent = '';
+
+  if (layout === 'sidebar') {
+    bodyContent = `
+      <div class="layout-sidebar">
+        <div class="sidebar">
+          ${summaryHtml}
+          ${skillsHtml}
+        </div>
+        <div class="main">
+          ${experienceSection}
+          ${educationSection}
+          ${referencesSection}
+        </div>
+      </div>`;
+  } else if (layout === 'two-column') {
+    bodyContent = `
+      <div class="layout-two-column">
+        <div class="col-left">
+          ${summaryHtml}
+          ${skillsHtml}
+          ${educationSection}
+          ${referencesSection}
+        </div>
+        <div class="col-right">
+          ${experienceSection}
+        </div>
+      </div>`;
+  } else {
+    bodyContent = `
+      ${summaryHtml}
+      ${skillsHtml}
+      ${experienceSection}
+      ${educationSection}
+      ${referencesSection}`;
+  }
 
   return `
 <!DOCTYPE html>
@@ -78,20 +153,6 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
   <title>${cv.title || 'CV'}</title>
 
   <style>
-  .layout-sidebar {
-  display: flex;
-}
-
-.layout-sidebar .sidebar {
-  width: 30%;
-  background: #f5f5f5;
-  padding: 20px;
-}
-
-.layout-sidebar .main {
-  width: 70%;
-  padding: 20px;
-}
     * {
       margin: 0;
       padding: 0;
@@ -110,53 +171,63 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
     }
 
     .header {
-      padding: 40px;
-      text-align:center;
-      ${templateStyles.header}
-      color: ${template.style === 'minimal' ? '#1a1a1a' : '#fff'};
+      padding: 30px 40px 20px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #333;
+      text-align: center;
+      background: white;
+      color: #000;
     }
-    
- .cv-title{
-  text-align:center;
-  font-size:18px;
-  font-weight:700;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  margin-bottom:20px;
-}
 
-    .name{
-  font-size:30px;
-  font-weight:700;
-  margin-bottom:10px;
-}
+    .cv-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+
+    .name {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
 
     .contact-info {
-      font-size: 13px;
-      opacity: 0.9;
       display: flex;
-      color:#555;
+      justify-content: center;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 8px;
+      text-align: center;
+      font-size: 13px;
+      color: #555;
     }
 
     .content {
-      padding: 40px;
+      padding: 20px 40px 40px;
     }
 
     .section {
-      margin-bottom: 28px;
+      margin-bottom: 25px;
     }
 
     .section-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  ${templateStyles.sectionTitle}
-}
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000;
+      color: #000;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+      ${templateStyles.sectionTitle}
+    }
 
-    .item {
-      margin-bottom: 12px;
+    .summary-text {
+      line-height: 1.8;
+      font-size: 13px;
+      color: #444;
     }
 
     .item-header {
@@ -182,7 +253,8 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
     .item-desc {
       font-size: 12px;
       color: #555;
-      line-height: 1.5;
+      line-height: 1.8;
+      margin-top: 6px;
     }
 
     .skills-container {
@@ -191,19 +263,19 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
       gap: 8px;
     }
 
-  .skill-tag {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  background: ${template.gradient[0]};
-  color: white;
-}
+    .skill-tag {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: ${template.gradient[0]};
+      color: white;
+    }
 
-.education-item,
-.experience-item,
-.reference-item {
-  ${templateStyles.card}
-}
+    .education-item,
+    .experience-item,
+    .reference-item {
+      ${templateStyles.card}
+    }
 
     .reference-item {
       margin-bottom: 10px;
@@ -218,6 +290,34 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
       color: #777;
     }
 
+    .layout-sidebar {
+      display: flex;
+    }
+
+    .layout-sidebar .sidebar {
+      width: 30%;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .layout-sidebar .main {
+      width: 70%;
+      padding: 20px;
+    }
+
+    .layout-two-column {
+      display: flex;
+      gap: 30px;
+    }
+
+    .layout-two-column .col-left {
+      width: 48%;
+    }
+
+    .layout-two-column .col-right {
+      width: 48%;
+    }
+
     @media print {
       body {
         -webkit-print-color-adjust: exact;
@@ -227,85 +327,23 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
 </head>
 
 <body>
-  <div class="cv-container layout-${layout}">
-
-   <div class="header">
-  <div class="cv-title">CURRICULUM VITAE</div>
-
-  <div class="name">
-    ${cv.full_name || 'Your Name'}
-  </div>
-
-  <div class="contact-info">
-    ${cv.email || ''}
-    ${cv.phone ? ` | ${cv.phone}` : ''}
-    ${cv.address ? ` | ${cv.address}` : ''}
-  </div>
-</div>
-
-    <div class="content"> 
-${layout === 'sidebar' ? `
-  <div class="layout-sidebar">
-
-    <div class="sidebar">
-      <h3>Skills</h3>
-      ${(cv.skills || []).map(s => `<div>${s}</div>`).join('')}
-    </div>
-
-    <div class="main">
-
-      <div class="section">
-        <div class="section-title">Experience</div>
-        ${experienceHtml}
+  <div class="cv-container">
+    <div class="header">
+      <div class="cv-title">CURRICULUM VITAE OF</div>
+      <div class="name">${cv.full_name || 'Your Name'}</div>
+      <div class="contact-info">
+        ${cv.email || ''}
+        ${cv.phone ? ` | ${cv.phone}` : ''}
+        ${cv.address ? ` | ${cv.address}` : ''}
       </div>
-
-      ${(cv.education || []).length ? `
-      <div class="section">
-        <div class="section-title">Education</div>
-        ${educationHtml}
-      </div>
-      ` : ''}
-
-      ${(cv.references_data || []).length ? `
-      <div class="section">
-        <div class="section-title">References</div>
-        ${referencesHtml}
-      </div>
-      ` : ''}
-
-    </div> <!-- close main -->
-  </div> <!-- close layout-sidebar -->
-` : `
-  <div class="content">
-
-    <div class="section">
-      <div class="section-title">Experience</div>
-      ${experienceHtml}
     </div>
 
-    ${(cv.education || []).length ? `
-    <div class="section">
-      <div class="section-title">Education</div>
-      ${educationHtml}
+    <div class="content">
+      ${bodyContent}
     </div>
-    ` : ''}
-
-    ${(cv.references_data || []).length ? `
-    <div class="section">
-      <div class="section-title">References</div>
-      ${referencesHtml}
-    </div>
-    ` : ''}
-
-  </div>
-`}    
-
-    ${layout === 'sidebar' ? `</div></div>` : `</div>`}
-    
   </div>
 </body>
-</html>
-  `;
+</html>`;
 }
 
 function getTemplateStyles(template: CVTemplate) {
@@ -315,59 +353,66 @@ function getTemplateStyles(template: CVTemplate) {
     case 'modern':
       return {
         header: `background: linear-gradient(135deg, ${template.gradient[0]}, ${template.gradient[1]});`,
+        sectionTitle: '',
+        card: '',
       };
 
     case 'minimal':
       return {
         header: `background: #f5f5f5; color: #000; border-bottom: 2px solid ${base};`,
+        sectionTitle: '',
+        card: '',
       };
 
     case 'executive':
       return {
         header: `background: linear-gradient(to right, ${base}, #1e3a8a);`,
+        sectionTitle: '',
+        card: '',
       };
 
-   case 'creative':
-  return {
-    header: `
-      background: linear-gradient(135deg, ${template.gradient[0]}, ${template.gradient[1]});
-    `,
-    sectionTitle: `
-      color: ${template.gradient[0]};
-      border-left: 6px solid ${template.gradient[0]};
-      padding-left: 10px;
-    `,
-    skillTag: `
-      background: ${template.gradient[0]};
-      color: white;
-      border-radius: 20px;
-    `,
-    card: `
-      background: #faf5ff;
-      padding: 12px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-    `
-  };
+    case 'creative':
+      return {
+        header: `background: linear-gradient(135deg, ${template.gradient[0]}, ${template.gradient[1]});`,
+        sectionTitle: `
+          color: ${template.gradient[0]};
+          border-left: 6px solid ${template.gradient[0]};
+          padding-left: 10px;
+        `,
+        card: `
+          background: #faf5ff;
+          padding: 12px;
+          border-radius: 12px;
+          margin-bottom: 12px;
+        `,
+      };
 
     case 'professional':
       return {
         header: `background: ${base};`,
+        sectionTitle: '',
+        card: '',
       };
 
     case 'tech':
       return {
         header: `background: linear-gradient(135deg, #111827, ${base});`,
+        sectionTitle: '',
+        card: '',
       };
 
     case 'elegant':
       return {
         header: `background: linear-gradient(135deg, ${base}, #b8860b);`,
+        sectionTitle: '',
+        card: '',
       };
 
     default:
       return {
         header: `background: linear-gradient(to right, ${base}, ${template.gradient[1]});`,
+        sectionTitle: '',
+        card: '',
       };
   }
 }
@@ -376,7 +421,7 @@ export async function triggerPDFDownload(
   html: string,
   filename = 'cv.pdf'
 ) {
-   if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return;
 
   const html2pdf = (await import('html2pdf.js')).default;
 
