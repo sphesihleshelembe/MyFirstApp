@@ -378,9 +378,10 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
     transform: [{ scale: scale.value }],
   }));
 
-  const handleDownload = async (cv: CV) => {
+  const handleDownload = async (cvData: CV) => {
   try {
-    await downloadCVAsPDF(cv);
+    const t = CV_TEMPLATES.find(tp => tp.id === cvData.template_id) || CV_TEMPLATES[0];
+    await downloadCVAsPDF(cvData, t);
   } catch (error) {
     console.error('PDF Error:', error);
     Alert.alert('PDF Error', String(error));
