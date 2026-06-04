@@ -111,28 +111,31 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
 
     .header {
       padding: 40px;
+      text-align:center;
       ${templateStyles.header}
       color: ${template.style === 'minimal' ? '#1a1a1a' : '#fff'};
     }
     
-    .cv-title {
-  font-size: 14px;
-  letter-spacing: 3px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  opacity: 0.9;
+ .cv-title{
+  text-align:center;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:20px;
 }
 
-    .name {
-      font-size: 34px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
+    .name{
+  font-size:30px;
+  font-weight:700;
+  margin-bottom:10px;
+}
 
     .contact-info {
       font-size: 13px;
       opacity: 0.9;
       display: flex;
+      color:#555;
       flex-wrap: wrap;
       gap: 15px;
     }
@@ -226,16 +229,19 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
 <body>
   <div class="cv-container layout-${layout}">
 
-    <div class="header">
-    <div class="cv-title">CURRICULUM VITAE</div>
-    
-      <div class="name">${cv.full_name || 'Your Name'}</div>
-      <div class="contact-info">
-        ${cv.email ? `<div>${cv.email}</div>` : ''}
-        ${cv.phone ? `<div>${cv.phone}</div>` : ''}
-        ${cv.address ? `<div>${cv.address}</div>` : ''}
-      </div>
-    </div>
+   <div class="header">
+  <div class="cv-title">CURRICULUM VITAE</div>
+
+  <div class="name">
+    ${cv.full_name || 'Your Name'}
+  </div>
+
+  <div class="contact-info">
+    ${cv.email || ''}
+    ${cv.phone ? ` | ${cv.phone}` : ''}
+    ${cv.address ? ` | ${cv.address}` : ''}
+  </div>
+</div>
 
     <div class="content"> 
 ${layout === 'sidebar' ? `
