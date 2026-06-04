@@ -138,14 +138,11 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
     }
 
     .section-title {
-      font-size: 15px;
-      font-weight: 700;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      border-bottom: 2px solid ${template.gradient[0]};
-      padding-bottom: 6px;
-      color: ${template.gradient[0]};
-    }
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  ${templateStyles.sectionTitle}
+}
 
     .item {
       margin-bottom: 12px;
@@ -183,13 +180,19 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
       gap: 8px;
     }
 
-    .skill-tag {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      background: ${template.gradient[0]};
-      color: white;
-    }
+  .skill-tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: ${template.gradient[0]};
+  color: white;
+}
+
+.education-item,
+.experience-item,
+.reference-item {
+  ${templateStyles.card}
+}
 
     .reference-item {
       margin-bottom: 10px;
@@ -308,10 +311,28 @@ function getTemplateStyles(template: CVTemplate) {
         header: `background: linear-gradient(to right, ${base}, #1e3a8a);`,
       };
 
-    case 'creative':
-      return {
-        header: `background: linear-gradient(135deg, ${template.gradient[0]}, ${template.gradient[1]});`,
-      };
+   case 'creative':
+  return {
+    header: `
+      background: linear-gradient(135deg, ${template.gradient[0]}, ${template.gradient[1]});
+    `,
+    sectionTitle: `
+      color: ${template.gradient[0]};
+      border-left: 6px solid ${template.gradient[0]};
+      padding-left: 10px;
+    `,
+    skillTag: `
+      background: ${template.gradient[0]};
+      color: white;
+      border-radius: 20px;
+    `,
+    card: `
+      background: #faf5ff;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    `
+  };
 
     case 'professional':
       return {
