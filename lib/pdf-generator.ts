@@ -114,6 +114,14 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
       ${templateStyles.header}
       color: ${template.style === 'minimal' ? '#1a1a1a' : '#fff'};
     }
+    
+    .cv-title {
+  font-size: 14px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
 
     .name {
       font-size: 34px;
@@ -219,6 +227,8 @@ export function generatePDFHtml(cv: CV, template: CVTemplate): string {
   <div class="cv-container layout-${layout}">
 
     <div class="header">
+    <div class="cv-title">CURRICULUM VITAE</div>
+    
       <div class="name">${cv.full_name || 'Your Name'}</div>
       <div class="contact-info">
         ${cv.email ? `<div>${cv.email}</div>` : ''}
