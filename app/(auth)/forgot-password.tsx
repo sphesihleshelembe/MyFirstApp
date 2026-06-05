@@ -21,7 +21,10 @@ const handleReset = async () => {
       return;
     }
 
-    Alert.alert('Success', 'Password reset email sent');
+   Alert.alert(
+  'Check Your Email',
+  'If an account exists for this email address, a password reset link has been sent. Please check your inbox and spam folder.'
+);
   } catch (err: any) {
     Alert.alert('Error', err.message);
   }
