@@ -254,12 +254,23 @@ export default function CreateScreen() {
         throw new Error(`HTTP ${response.status}`);
       }
       const data = await response.json();
-      if (data.summary) setSummary(data.summary);
+      if (data.summary) {
+        setSummary(data.summary);
+        await persistSummary(data.summary);
+      }
       else throw new Error(data.error || 'No summary returned');
     } catch (e) {
       Alert.alert('Error', 'Failed to generate summary. Please try again.');
     }
     setGeneratingSummary(false);
+  };
+
+  const persistSummary = async (newSummary: string) => {
+    await saveDraftCV({ summary: newSummary });
+    setLastAutoSave(new Date());
+    if (savedId && user) {
+      await supabase.from('cvs').update({ summary: newSummary, updated_at: new Date().toISOString() }).eq('id', savedId);
+    }
   };
 
   const handleAIGeneration = () => {
@@ -345,7 +356,10 @@ export default function CreateScreen() {
         throw new Error(`HTTP ${response.status}`);
       }
       const data = await response.json();
-      if (data.summary) setSummary(data.summary);
+      if (data.summary) {
+        setSummary(data.summary);
+        await persistSummary(data.summary);
+      }
       else throw new Error(data.error || 'No summary returned');
     } catch (e) {
       Alert.alert('Error', 'Failed to generate summary. Please try again.');
