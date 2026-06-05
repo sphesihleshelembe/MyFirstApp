@@ -241,6 +241,7 @@ export default function CreateScreen() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
         },
         body: JSON.stringify({
           fullName,
@@ -249,8 +250,12 @@ export default function CreateScreen() {
           education,
         }),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       if (data.summary) setSummary(data.summary);
+      else throw new Error(data.error || 'No summary returned');
     } catch (e) {
       Alert.alert('Error', 'Failed to generate summary. Please try again.');
     }
@@ -327,6 +332,7 @@ export default function CreateScreen() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
         },
         body: JSON.stringify({
           fullName,
@@ -335,8 +341,12 @@ export default function CreateScreen() {
           education,
         }),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       if (data.summary) setSummary(data.summary);
+      else throw new Error(data.error || 'No summary returned');
     } catch (e) {
       Alert.alert('Error', 'Failed to generate summary. Please try again.');
     }
