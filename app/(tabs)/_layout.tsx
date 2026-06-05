@@ -1,6 +1,6 @@
 import { Tabs, router } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { Home, FilePlus, FileText, User, Settings } from 'lucide-react-native';
+import { Home, FilePlus, FileText, User, Settings, Target } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import { colors, radius } from '@/constants/theme';
@@ -39,6 +39,13 @@ export default function TabsLayout() {
         options={{
           title: 'Create',
           tabBarIcon: ({ color, size }) => <FilePlus color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="match"
+        options={{
+          title: 'Match',
+          tabBarIcon: ({ color, size }) => <Target color={color} size={size} />,
         }}
       />
       <Tabs.Screen
