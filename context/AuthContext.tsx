@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -9,6 +9,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<{ error: string | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -17,53 +18,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isInitializing = useRef(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Handle profile creation is now automatic via database trigger
-      // The trigger 'on_auth_user_created' handles this server-side
+      // Deadlock guard: skip getSession during INITIAL_SESSION to avoid
+      // re-triggering the listener (known Supabase deadlock pattern)
+      if (event === 'INITIAL_SESSION' && isInitializing.current) {
+        isInitializing.current = false;
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (event === 'SIGNED_OUT') {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error && data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
     return { error: error?.message ?? null };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    // The profile will be automatically created by the database trigger
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: undefined, // Disable email confirmation
+        emailRedirectTo: undefined,
       },
     });
 
-    // If signup was successful and we have a user, verify profile exists
-    if (!error && data.user) {
-      // Wait a brief moment for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Verify profile was created (optional check)
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      // Profile creation is handled by trigger, so we don't need to create it here
+    if (!error && data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
     }
 
     return { error: error?.message ?? null };
@@ -71,10 +72,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+  };
+
+  const deleteAccount = async (): Promise<{ error: string | null }> => {
+    if (!user) return { error: 'Not signed in' };
+
+    try {
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+      const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      if (!accessToken) return { error: 'No active session' };
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': supabaseKey,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        return { error: data.error || 'Failed to delete account' };
+      }
+
+      await signOut();
+      return { error: null };
+    } catch (e) {
+      return { error: 'Failed to delete account. Please try again.' };
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

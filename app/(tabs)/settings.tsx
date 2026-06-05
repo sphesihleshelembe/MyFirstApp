@@ -26,12 +26,12 @@ import {
   Mail,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
 
 export default function SettingsScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, deleteAccount } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -57,9 +57,14 @@ export default function SettingsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await supabase.from('cvs').delete().eq('user_id', user?.id);
-            await signOut();
-            router.replace('/(auth)/login');
+            setDeleting(true);
+            const { error } = await deleteAccount();
+            setDeleting(false);
+            if (error) {
+              Alert.alert('Error', error);
+            } else {
+              router.replace('/(auth)/login');
+            }
           },
         },
       ]
