@@ -35,7 +35,6 @@ import {
   Layers,
   Calendar,
   Building,
-  Download,
   Crown,
   Lock,
 } from 'lucide-react-native';
@@ -96,7 +95,7 @@ export default function CreateScreen() {
   const [references, setReferences] = useState<ReferenceEntry[]>([]);
 
   const [showRewardedAd, setShowRewardedAd] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'pdf' | 'template' | 'ai' | null>(null);
+  const [pendingAction, setPendingAction] = useState<'template' | 'ai' | null>(null);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<string | null>(null);
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -278,11 +277,6 @@ export default function CreateScreen() {
     setShowRewardedAd(true);
   };
 
-  const handleDownloadPDF = () => {
-    setPendingAction('pdf');
-    setShowRewardedAd(true);
-  };
-
   const handleSelectTemplate = (template: CVTemplate) => {
     if (template.isPremium) {
       setSelectedPremiumTemplate(template.id);
@@ -295,42 +289,13 @@ export default function CreateScreen() {
 
   const handleRewardEarned = () => {
     setShowRewardedAd(false);
-    if (pendingAction === 'pdf') {
-      executeDownloadPDF();
-    } else if (pendingAction === 'template' && selectedPremiumTemplate) {
+    if (pendingAction === 'template' && selectedPremiumTemplate) {
       setTemplateId(selectedPremiumTemplate);
       setSelectedPremiumTemplate(null);
     } else if (pendingAction === 'ai') {
       executeAIGeneration();
     }
     setPendingAction(null);
-  };
-
-  const executeDownloadPDF = () => {
-    if (Platform.OS === 'web') {
-      const template = CV_TEMPLATES.find(t => t.id === templateId) || CV_TEMPLATES[0];
-      const cvData: CV = {
-        id: savedId || generateId(),
-        user_id: user?.id || '',
-        title,
-        template_id: templateId,
-        full_name: fullName,
-        phone,
-        email,
-        address,
-        summary,
-        skills,
-        education,
-        work_experience: workExp,
-        references_data: references,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      const html = generatePDFHtml(cvData, template);
-      triggerPDFDownload(html, `${fullName || 'CV'}_Resume.pdf`);
-    } else {
-      Alert.alert('Info', 'PDF download is available on web platform.');
-    }
   };
 
   const executeAIGeneration = async () => {
@@ -667,18 +632,6 @@ export default function CreateScreen() {
               <View style={styles.saveSection}>
                 <Text style={styles.saveSectionTitle}>Ready to save?</Text>
                 <Text style={styles.saveSectionDesc}>Your CV will be saved with the {CV_TEMPLATES.find(t => t.id === templateId)?.name} template.</Text>
-
-                <TouchableOpacity style={styles.downloadBtn} onPress={handleDownloadPDF}>
-                  <LinearGradient
-                    colors={[colors.success, '#059669']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.downloadGradient}
-                  >
-                    <Download color={colors.white} size={18} />
-                    <Text style={styles.downloadText}>Download PDF (Watch Ad)</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
 
                 <TouchableOpacity style={styles.saveFinalBtn} onPress={saveCV} disabled={saving}>
                   <LinearGradient
@@ -1330,29 +1283,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
-  },
-  downloadBtn: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    width: '100%',
-    marginBottom: spacing.md,
-    shadowColor: colors.success,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  downloadGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  downloadText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.white,
   },
   saveFinalBtn: {
     borderRadius: radius.lg,
