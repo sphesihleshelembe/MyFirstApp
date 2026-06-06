@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,7 @@ import {
   Building,
   Crown,
   Lock,
+  Heart,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV, EducationEntry, WorkExperienceEntry, ReferenceEntry } from '@/lib/supabase';
@@ -97,8 +98,31 @@ export default function CreateScreen() {
   const [showRewardedAd, setShowRewardedAd] = useState(false);
   const [pendingAction, setPendingAction] = useState<'template' | 'ai' | null>(null);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<string | null>(null);
+  const [favoriteTemplates, setFavoriteTemplates] = useState<Set<string>>(new Set());
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // CV completion score: each category contributes a portion toward 100%
+  const completionScore = useMemo(() => {
+    let score = 0;
+    // Personal info: 4 fields × 7% = 28%
+    if (fullName.trim()) score += 7;
+    if (phone.trim()) score += 7;
+    if (email.trim()) score += 7;
+    if (address.trim()) score += 7;
+    // Skills: up to 15% (5% per skill, max 3)
+    score += Math.min(skills.length * 5, 15);
+    // Education: up to 15% (15% for ≥1 entry)
+    if (education.length > 0) score += 15;
+    // Work experience: up to 20% (20% for ≥1 entry)
+    if (workExp.length > 0) score += 20;
+    // Summary: 12%
+    if (summary.trim().length >= 20) score += 12;
+    // References: 5%
+    if (references.length > 0) score += 5;
+    // Template chosen (non-default or explicitly set): 0 — always has a value, give credit for reaching template step
+    return Math.min(score, 100);
+  }, [fullName, phone, email, address, skills, education, workExp, summary, references]);
 
   useEffect(() => {
     if (cvId) {
@@ -118,6 +142,38 @@ export default function CreateScreen() {
 
   return () => unsubscribe();
 }, [user]);
+
+  useEffect(() => {
+    if (user) loadFavorites();
+  }, [user]);
+
+  const loadFavorites = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('favorite_templates')
+      .select('template_id')
+      .eq('user_id', user.id);
+    if (data) setFavoriteTemplates(new Set(data.map((r: { template_id: string }) => r.template_id)));
+  };
+
+  const toggleFavorite = async (templateId: string, e: any) => {
+    e.stopPropagation?.();
+    if (!user) return;
+    const isFav = favoriteTemplates.has(templateId);
+    // Optimistic update
+    setFavoriteTemplates(prev => {
+      const next = new Set(prev);
+      if (isFav) next.delete(templateId);
+      else next.add(templateId);
+      return next;
+    });
+    if (isFav) {
+      await supabase.from('favorite_templates').delete()
+        .eq('user_id', user.id).eq('template_id', templateId);
+    } else {
+      await supabase.from('favorite_templates').insert({ user_id: user.id, template_id: templateId });
+    }
+  };
 
   const loadDraft = async () => {
     const draft = await getDraftCV();
@@ -401,12 +457,38 @@ export default function CreateScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Progress Indicator */}
-      <View style={styles.progressBar}>
-        {SECTIONS.map((_, i) => (
-          <View key={i} style={[styles.progressDot, i <= activeSection && styles.progressDotActive, i === activeSection && styles.progressDotCurrent]} />
-        ))}
-        <View style={[styles.progressLine, { width: `${(activeSection / (SECTIONS.length - 1)) * 100}%` }]} />
+      {/* CV Completion Meter */}
+      <View style={styles.completionBar}>
+        <View style={styles.completionLabelRow}>
+          <Text style={styles.completionLabel}>CV Completion</Text>
+          <Text style={[
+            styles.completionPct,
+            completionScore >= 80 ? { color: colors.success } :
+            completionScore >= 40 ? { color: colors.warning } :
+            { color: colors.textMuted }
+          ]}>{completionScore}%</Text>
+        </View>
+        <View style={styles.completionTrack}>
+          <View
+            style={[
+              styles.completionFill,
+              { width: `${completionScore}%` as any },
+              completionScore >= 80 ? { backgroundColor: colors.success } :
+              completionScore >= 40 ? { backgroundColor: colors.warning } :
+              { backgroundColor: colors.primary }
+            ]}
+          />
+        </View>
+        {/* Step dots */}
+        <View style={styles.completionDots}>
+          {SECTIONS.map((_, i) => (
+            <View key={i} style={[
+              styles.completionDot,
+              i < activeSection && styles.completionDotDone,
+              i === activeSection && styles.completionDotActive,
+            ]} />
+          ))}
+        </View>
       </View>
 
       {/* Section Tabs */}
@@ -625,6 +707,17 @@ export default function CreateScreen() {
                       </View>
                       <Text style={styles.templateDesc}>{t.description}</Text>
                     </View>
+                    <TouchableOpacity
+                      style={styles.heartBtn}
+                      onPress={(e) => toggleFavorite(t.id, e)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Heart
+                        size={18}
+                        color={favoriteTemplates.has(t.id) ? '#EF4444' : colors.textMuted}
+                        fill={favoriteTemplates.has(t.id) ? '#EF4444' : 'transparent'}
+                      />
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1001,38 +1094,66 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primaryLight,
   },
-  progressBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.sm,
+  // Completion meter
+  completionBar: {
     paddingHorizontal: spacing.lg,
-    position: 'relative',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  progressDot: {
+  completionLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  completionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  completionPct: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  completionTrack: {
+    height: 6,
+    backgroundColor: colors.border,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  completionFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  completionDots: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  completionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.border,
+  },
+  completionDotDone: {
+    backgroundColor: colors.primaryGlow,
+  },
+  completionDotActive: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.border,
-    marginHorizontal: 4,
-  },
-  progressDotActive: {
-    backgroundColor: colors.primaryGlow,
-  },
-  progressDotCurrent: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
     backgroundColor: colors.primary,
   },
-  progressLine: {
-    position: 'absolute',
-    top: '50%',
-    left: spacing.lg + 12,
-    height: 2,
-    backgroundColor: colors.primary,
-    borderRadius: 1,
-    zIndex: -1,
+  // Heart button
+  heartBtn: {
+    padding: spacing.xs,
+    marginLeft: spacing.xs,
   },
   tabs: {
     maxHeight: 52,
