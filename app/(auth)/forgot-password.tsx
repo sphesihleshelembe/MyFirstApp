@@ -13,7 +13,7 @@ const handleReset = async () => {
     }
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://ai-cv-builder-app-cl4a.bolt.host/auth/callback',
+      redirectTo: 'https://ai-cv-builder-app-cl4a.bolt.host/(auth)/reset-password',
     });
 
     if (error) {
