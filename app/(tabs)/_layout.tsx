@@ -4,17 +4,22 @@ import { Home, FilePlus, FileText, User, Settings, Target, Gauge } from 'lucide-
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import { colors, radius } from '@/constants/theme';
+import { usePathname } from 'expo-router';
+
+const pathname = usePathname();
 
 export default function TabsLayout() {
   const { session, loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !session) {
-      router.replace('/(auth)/login');
-    }
-  }, [session, loading]);
+ useEffect(() => {
+  const isAuthRoute =
+    pathname.includes('callback') ||
+    pathname.includes('reset-password');
 
-  if (!session) return null;
+  if (!loading && !session && !isAuthRoute) {
+    router.replace('/(auth)/login');
+  }
+}, [session, loading, pathname]);
 
   return (
     <Tabs
