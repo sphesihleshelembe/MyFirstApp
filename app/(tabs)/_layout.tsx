@@ -6,9 +6,10 @@ import { useEffect } from 'react';
 import { colors, radius } from '@/constants/theme';
 import { usePathname } from 'expo-router';
 
-const pathname = usePathname();
+
 
 export default function TabsLayout() {
+  const pathname = usePathname();
   const { session, loading } = useAuth();
 
  useEffect(() => {
