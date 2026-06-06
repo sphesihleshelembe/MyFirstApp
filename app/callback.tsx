@@ -8,7 +8,7 @@ export default function AuthCallback() {
   useEffect(() => {
     // Listen for PASSWORD_RECOVERY which Supabase fires when a reset link is followed
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+      if (event === 'PASSWORD_RECOVERY' ) {
         subscription.unsubscribe();
         router.replace('/(auth)/reset-password');
       }
