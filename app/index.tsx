@@ -4,7 +4,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { colors } from '@/constants/theme';
 
 export default function Index() {
-  const { session, loading } = useAuth();
+  const { session, loading, isPasswordRecovery } = useAuth();
 
   if (loading) {
     return (
@@ -12,6 +12,10 @@ export default function Index() {
         <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
+  }
+
+  if (isPasswordRecovery) {
+    return <Redirect href="/(auth)/reset-password" />;
   }
 
   return session ? <Redirect href="/(tabs)" /> : <Redirect href="/(auth)/login" />;

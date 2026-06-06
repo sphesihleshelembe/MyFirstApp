@@ -6,6 +6,7 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  isPasswordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -18,12 +19,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const isInitializing = useRef(true);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Deadlock guard: skip getSession during INITIAL_SESSION to avoid
-      // re-triggering the listener (known Supabase deadlock pattern)
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        return;
+      }
+
       if (event === 'INITIAL_SESSION' && isInitializing.current) {
         isInitializing.current = false;
         setSession(session);
@@ -36,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (event === 'SIGNED_OUT') {
+        setIsPasswordRecovery(false);
         setLoading(false);
       }
     });
@@ -108,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signIn, signUp, signOut, deleteAccount }}>
+    <AuthContext.Provider value={{ session, user, loading, isPasswordRecovery, signIn, signUp, signOut, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
