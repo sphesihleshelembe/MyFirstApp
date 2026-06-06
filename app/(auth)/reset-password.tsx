@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 
 export default function ResetPassword() {
+  console.log('RESET PASSWORD SCREEN LOADED');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
