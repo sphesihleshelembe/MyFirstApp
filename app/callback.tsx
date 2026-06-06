@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 export default function AuthCallback() {
   useEffect(() => {
     const handle = async () => {
-      console.log("Auth callback triggered");
+      cons.log("Auth callback triggered");
 
       const { data: { session } } = await supabase.auth.getSession();
 
