@@ -17,7 +17,7 @@ export default function TabsLayout() {
     pathname.includes('callback') ||
     pathname.includes('reset-password');
 
-  if (!session && !isAuthRoute) return null;
+  if (!session && !isAuthRoute) return;
    
   if (!loading && !session && !isAuthRoute) {
     router.replace('/(auth)/login');
