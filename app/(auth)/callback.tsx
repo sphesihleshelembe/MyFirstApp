@@ -10,7 +10,7 @@ export default function AuthCallback() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY' ) {
         subscription.unsubscribe();
-        router.replace('/(auth)/reset-password');
+        router.replace('/(auth)/callback');
       }
     });
 
