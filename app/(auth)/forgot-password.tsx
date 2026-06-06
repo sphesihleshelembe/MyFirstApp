@@ -23,7 +23,7 @@ const handleReset = async () => {
 
    Alert.alert(
   'Check Your Email',
-  'If an account exists for this email address, a password reset link has been sent. Please check your inbox and spam folder.'
+  'If an account exists for this email address, a password reset link has been sent. Please check your inbox.'
 );
   } catch (err: any) {
     Alert.alert('Error', err.message);
