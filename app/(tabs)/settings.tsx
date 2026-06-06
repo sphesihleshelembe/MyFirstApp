@@ -7,6 +7,8 @@ import {
   ScrollView,
   Alert,
   Switch,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -23,52 +25,41 @@ import {
   Download,
   User,
   Palette,
-  Mail,
+  AlertTriangle,
+  X,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { colors, spacing, radius, typography } from '@/constants/theme';
+import { colors, spacing, radius } from '@/constants/theme';
+
+type ConfirmMode = 'signout' | 'delete' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [deleting, setDeleting] = useState(false);
+  const [confirmMode, setConfirmMode] = useState<ConfirmMode>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+  const handleSignOut = async () => {
+    setLoading(true);
+    setError(null);
+    await signOut();
+    setLoading(false);
+    setConfirmMode(null);
+    router.replace('/(auth)/login');
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all CVs. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setDeleting(true);
-            const { error } = await deleteAccount();
-            setDeleting(false);
-            if (error) {
-              Alert.alert('Error', error);
-            } else {
-              router.replace('/(auth)/login');
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteAccount = async () => {
+    setLoading(true);
+    setError(null);
+    const { error: err } = await deleteAccount();
+    setLoading(false);
+    if (err) {
+      setError(err);
+    } else {
+      setConfirmMode(null);
+      router.replace('/(auth)/login');
+    }
   };
 
   const showAlert = (title: string, message: string) => {
@@ -152,7 +143,7 @@ export default function SettingsScreen() {
             <SettingRow
               icon={<Palette color={colors.warning} size={20} />}
               label="Templates"
-              desc="4 templates available"
+              desc="8 templates available"
               onPress={() => router.push('/(tabs)/create')}
             />
           </View>
@@ -187,9 +178,14 @@ export default function SettingsScreen() {
 
         {/* Danger Zone */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Account</Text>
+          <Text style={styles.sectionLabel}>Danger Zone</Text>
           <View style={styles.card}>
-            <TouchableOpacity style={styles.dangerRow} onPress={handleSignOut}>
+            {/* Sign Out */}
+            <TouchableOpacity
+              style={styles.dangerRow}
+              onPress={() => { setConfirmMode('signout'); setError(null); }}
+              activeOpacity={0.7}
+            >
               <View style={[styles.rowIcon, styles.rowIconDanger]}>
                 <LogOut color={colors.error} size={20} />
               </View>
@@ -199,8 +195,44 @@ export default function SettingsScreen() {
               </View>
               <ChevronRight color={colors.textMuted} size={18} />
             </TouchableOpacity>
+
+            {confirmMode === 'signout' && (
+              <View style={styles.confirmBox}>
+                <View style={styles.confirmHeader}>
+                  <AlertTriangle color={colors.warning} size={18} />
+                  <Text style={styles.confirmTitle}>Sign out?</Text>
+                  <TouchableOpacity onPress={() => setConfirmMode(null)} style={styles.confirmClose}>
+                    <X color={colors.textMuted} size={16} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.confirmDesc}>You will be redirected to the login screen.</Text>
+                <View style={styles.confirmActions}>
+                  <TouchableOpacity style={styles.confirmCancel} onPress={() => setConfirmMode(null)}>
+                    <Text style={styles.confirmCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.confirmDanger}
+                    onPress={handleSignOut}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.white} size="small" />
+                    ) : (
+                      <Text style={styles.confirmDangerText}>Sign Out</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             <View style={styles.divider} />
-            <TouchableOpacity style={styles.dangerRow} onPress={handleDeleteAccount}>
+
+            {/* Delete Account */}
+            <TouchableOpacity
+              style={styles.dangerRow}
+              onPress={() => { setConfirmMode('delete'); setError(null); }}
+              activeOpacity={0.7}
+            >
               <View style={[styles.rowIcon, styles.rowIconDanger]}>
                 <Trash2 color={colors.error} size={20} />
               </View>
@@ -210,6 +242,38 @@ export default function SettingsScreen() {
               </View>
               <ChevronRight color={colors.textMuted} size={18} />
             </TouchableOpacity>
+
+            {confirmMode === 'delete' && (
+              <View style={[styles.confirmBox, styles.confirmBoxDanger]}>
+                <View style={styles.confirmHeader}>
+                  <AlertTriangle color={colors.error} size={18} />
+                  <Text style={[styles.confirmTitle, { color: colors.error }]}>Delete account?</Text>
+                  <TouchableOpacity onPress={() => setConfirmMode(null)} style={styles.confirmClose}>
+                    <X color={colors.textMuted} size={16} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.confirmDesc}>
+                  This will permanently delete your account and all CVs. This cannot be undone.
+                </Text>
+                {error && <Text style={styles.confirmError}>{error}</Text>}
+                <View style={styles.confirmActions}>
+                  <TouchableOpacity style={styles.confirmCancel} onPress={() => setConfirmMode(null)}>
+                    <Text style={styles.confirmCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.confirmDanger}
+                    onPress={handleDeleteAccount}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.white} size="small" />
+                    ) : (
+                      <Text style={styles.confirmDangerText}>Delete Forever</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
@@ -304,6 +368,79 @@ const styles = StyleSheet.create({
   rowLabelDanger: { color: colors.error },
   rowDesc: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   divider: { height: 1, backgroundColor: colors.border, marginLeft: spacing.md + 42 + spacing.md },
+
+  // Inline confirm box
+  confirmBox: {
+    margin: spacing.md,
+    marginTop: 0,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.warning + '44',
+  },
+  confirmBoxDanger: {
+    borderColor: colors.error + '44',
+  },
+  confirmHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  confirmTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.warning,
+  },
+  confirmClose: {
+    padding: 4,
+  },
+  confirmDesc: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+  },
+  confirmError: {
+    fontSize: 12,
+    color: colors.error,
+    marginBottom: spacing.sm,
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  confirmCancel: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  confirmCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  confirmDanger: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
+  },
+  confirmDangerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.white,
+  },
+
   footer: { alignItems: 'center', paddingTop: spacing.xl },
   footerText: { fontSize: 13, color: colors.textMuted },
   footerLink: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },

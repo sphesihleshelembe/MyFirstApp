@@ -59,10 +59,10 @@ const { width } = Dimensions.get('window');
 
 const SECTIONS = [
   { id: 'personal', label: 'Personal', icon: User },
-  { id: 'summary', label: 'Summary', icon: FileText },
   { id: 'skills', label: 'Skills', icon: Sparkles },
   { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'experience', label: 'Experience', icon: Briefcase },
+  { id: 'summary', label: 'Summary', icon: FileText },
   { id: 'references', label: 'References', icon: Users },
   { id: 'template', label: 'Template', icon: Layers },
 ];
@@ -447,7 +447,7 @@ export default function CreateScreen() {
           )}
 
           {/* Summary Section */}
-          {activeSection === 1 && (
+          {activeSection === 4 && (
             <View style={styles.section}>
               <SectionHeader icon={<FileText color={colors.primaryLight} size={22} />} title="Professional Summary" subtitle="Your career highlights" />
               <TouchableOpacity style={styles.aiBtn} onPress={handleAIGeneration} disabled={generatingSummary}>
@@ -480,7 +480,7 @@ export default function CreateScreen() {
           )}
 
           {/* Skills Section */}
-          {activeSection === 2 && (
+          {activeSection === 1 && (
             <View style={styles.section}>
               <SectionHeader icon={<Sparkles color={colors.primaryLight} size={22} />} title="Skills" subtitle="Your key competencies" />
               <View style={styles.skillInputRow}>
@@ -512,7 +512,7 @@ export default function CreateScreen() {
           )}
 
           {/* Education Section */}
-          {activeSection === 3 && (
+          {activeSection === 2 && (
             <View style={styles.section}>
               <SectionHeader icon={<GraduationCap color={colors.primaryLight} size={22} />} title="Education" subtitle="Your academic background" />
               {education.map((edu, i) => (
@@ -542,7 +542,7 @@ export default function CreateScreen() {
           )}
 
           {/* Work Experience Section */}
-          {activeSection === 4 && (
+          {activeSection === 3 && (
             <View style={styles.section}>
               <SectionHeader icon={<Briefcase color={colors.primaryLight} size={22} />} title="Work Experience" subtitle="Your professional history" />
               {workExp.map((exp, i) => (

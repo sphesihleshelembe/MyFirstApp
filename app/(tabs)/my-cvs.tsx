@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Alert,
   RefreshControl,
-  Platform,
   Dimensions,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -23,12 +22,10 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { FileText, Plus, Trash2, Edit, Download, Folder, Clock, Layers } from 'lucide-react-native';
+import { FileText, Plus, Trash2, Edit, Folder, Clock, Layers } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
-import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
-import { getTemplateById } from '@/lib/templates';
 
 const { width } = Dimensions.get('window');
 
@@ -85,26 +82,6 @@ export default function MyCVsScreen() {
       },
     ]);
   };
-const downloadCV = async (cv: CV) => {
-  if (Platform.OS !== 'web') {
-    Alert.alert('Download', 'PDF download currently works on web.');
-    return;
-  }
-
-  try {
-    const template = getTemplateById(cv.template_id || 'classic');
-
-    const html = generatePDFHtml(cv, template);
-
-    await triggerPDFDownload(
-      html,
-      `${cv.title?.replace(/\s+/g, '-') || 'cv'}.pdf`
-    );
-  } catch (error) {
-    console.error(error);
-    Alert.alert('Error', 'Failed to generate PDF');
-  }
-};
   const filteredCVs = filter ? cvs.filter(c => c.template_id === filter) : cvs;
   const templatesUsed = [...new Set(cvs.map(c => c.template_id))];
 
@@ -188,7 +165,6 @@ const downloadCV = async (cv: CV) => {
                   isFirst={i === 0}
                   onEdit={() => router.push({ pathname: '/(tabs)/create', params: { cvId: cv.id } })}
                   onDelete={() => deleteCV(cv)}
-                  onDownload={() => downloadCV(cv)}
                 />
               </Animated.View>
             ))}
@@ -200,12 +176,11 @@ const downloadCV = async (cv: CV) => {
   );
 }
 
-function CVItem({ cv, isFirst, onEdit, onDelete, onDownload }: {
+function CVItem({ cv, isFirst, onEdit, onDelete }: {
   cv: CV;
   isFirst: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onDownload: () => void;
 }) {
   const templateColors = TEMPLATE_COLORS[cv.template_id] || TEMPLATE_COLORS.classic;
   const date = new Date(cv.updated_at);
@@ -269,11 +244,6 @@ function CVItem({ cv, isFirst, onEdit, onDelete, onDownload }: {
           <TouchableOpacity style={styles.actionBtn} onPress={onEdit} activeOpacity={0.7}>
             <Edit color={colors.primaryLight} size={16} />
             <Text style={[styles.actionBtnText, { color: colors.primaryLight }]}>Edit</Text>
-          </TouchableOpacity>
-          <View style={styles.actionDivider} />
-          <TouchableOpacity style={styles.actionBtn} onPress={onDownload} activeOpacity={0.7}>
-            <Download color={colors.success} size={16} />
-            <Text style={[styles.actionBtnText, { color: colors.success }]}>Download</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -361,5 +331,4 @@ const styles = StyleSheet.create({
   cvActions: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surfaceElevated },
   actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: spacing.sm },
   actionBtnText: { fontSize: 12, fontWeight: '600' },
-  actionDivider: { width: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
 });
