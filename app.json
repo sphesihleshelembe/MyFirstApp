@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CVbuilder",
+    "name": "ai.cv.builder.app",
     "slug": "bolt-expo-nativewind",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,35 +8,33 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true
     },
-
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      
     },
-
     "plugins": [
       "expo-router",
       "expo-font",
       "expo-web-browser"
     ],
-
     "experiments": {
       "typedRoutes": true
     },
-
+    
+  "expo": {
+    "scheme": "cvbuilder"
+  }
+    
     "extra": {
-      "supabaseUrl": "https://zcyxdldbyohqytowugxs.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjeXhkbGRieW9ocXl0b3d1Z3hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwODcxNDksImV4cCI6MjA5NTY2MzE0OX0.yPkINDGSNtmF070b2k-DwbyrjBffE_sWGWDv4vtTRpQ",
       "router": {},
       "eas": {
         "projectId": "4ae164cd-3c11-4701-9a8f-7c428fc6068a"
       }
     },
-
     "android": {
       "package": "com.sphesihleshelembe.cvbuilder"
     }
