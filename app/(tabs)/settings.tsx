@@ -137,7 +137,7 @@ export default function SettingsScreen() {
               icon={<Download color={colors.success} size={20} />}
               label="Download Format"
               desc="HTML (browser printable)"
-              onPress={() => showAlert('Download', 'Open any CV and use the Download button to save as HTML. Open the file in your browser and print to PDF.')}
+              onPress={() => showAlert('Download', 'Open any CV and use the Download button to save as PDF. Open the file in your browser and print to PDF.')}
             />
             <View style={styles.divider} />
             <SettingRow
@@ -157,7 +157,7 @@ export default function SettingsScreen() {
               icon={<HelpCircle color={colors.primaryLight} size={20} />}
               label="Help Center"
               desc="Guides and FAQs"
-              onPress={() => showAlert('Help', 'Email support at support@cvcraftai.com')}
+              onPress={() => showAlert('Help', 'Email support at support sphesihleshelembe12@gmail.com')}
             />
             <View style={styles.divider} />
             <SettingRow
@@ -171,7 +171,7 @@ export default function SettingsScreen() {
               icon={<Info color={colors.primaryLight} size={20} />}
               label="About CVCraft AI"
               desc="Version 1.0.0"
-              onPress={() => showAlert('CVCraft AI', 'Version 1.0.0\n\nAI-powered CV builder for professionals.\nBuilt with Expo & Supabase.')}
+              onPress={() => showAlert('CVCraft AI', 'Version 1.0.0\n\nAI-powered CV builder for professionals.\nBuilt by Sphesihle Shelembe.')}
             />
           </View>
         </View>
