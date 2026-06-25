@@ -22,9 +22,10 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { FileText, Plus, Trash2, Edit, Folder, Clock, Layers } from 'lucide-react-native';
+import { FileText, Plus, Trash2, Edit, Folder, Clock, Layers, Download } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
+import { downloadCVAsPDF } from '@/utils/cvExport';
 import { colors, spacing, radius, typography } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -165,6 +166,7 @@ export default function MyCVsScreen() {
                   isFirst={i === 0}
                   onEdit={() => router.push({ pathname: '/(tabs)/create', params: { cvId: cv.id } })}
                   onDelete={() => deleteCV(cv)}
+                  onDownload={() => downloadCVAsPDF(cv)}
                 />
               </Animated.View>
             ))}
@@ -176,11 +178,12 @@ export default function MyCVsScreen() {
   );
 }
 
-function CVItem({ cv, isFirst, onEdit, onDelete }: {
+function CVItem({ cv, isFirst, onEdit, onDelete, onDownload }: {
   cv: CV;
   isFirst: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onDownload: () => void;
 }) {
   const templateColors = TEMPLATE_COLORS[cv.template_id] || TEMPLATE_COLORS.classic;
   const date = new Date(cv.updated_at);
@@ -244,6 +247,11 @@ function CVItem({ cv, isFirst, onEdit, onDelete }: {
           <TouchableOpacity style={styles.actionBtn} onPress={onEdit} activeOpacity={0.7}>
             <Edit color={colors.primaryLight} size={16} />
             <Text style={[styles.actionBtnText, { color: colors.primaryLight }]}>Edit</Text>
+          </TouchableOpacity>
+          <View style={styles.actionDivider} />
+          <TouchableOpacity style={styles.actionBtn} onPress={onDownload} activeOpacity={0.7}>
+            <Download color={colors.success} size={16} />
+            <Text style={[styles.actionBtnText, { color: colors.success }]}>Download</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -329,6 +337,7 @@ const styles = StyleSheet.create({
   cvMetaText: { fontSize: 12, color: colors.textMuted },
   cvName: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
   cvActions: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surfaceElevated },
+  actionDivider: { width: 1, backgroundColor: colors.border },
   actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: spacing.sm },
   actionBtnText: { fontSize: 12, fontWeight: '600' },
 });
