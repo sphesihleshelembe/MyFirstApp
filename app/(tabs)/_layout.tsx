@@ -1,5 +1,5 @@
 import { Tabs, router } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Home, FilePlus, FileText, User, Settings, Target, Gauge } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -12,17 +12,29 @@ export default function TabsLayout() {
   const pathname = usePathname();
   const { session, loading } = useAuth();
 
- useEffect(() => {
-  const isAuthRoute =
-    pathname.includes('callback') ||
-    pathname.includes('reset-password');
+  useEffect(() => {
+    if (loading) return; // Wait for auth to finish loading
 
-  if (!session && !isAuthRoute) return;
-   
-  if (!loading && !session && !isAuthRoute) {
-    router.replace('/(auth)/login');
+    const isAuthRoute =
+      pathname.includes('callback') ||
+      pathname.includes('reset-password');
+
+    if (!session && !isAuthRoute) {
+      router.replace('/(auth)/login');
+    }
+  }, [session, loading, pathname]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
   }
-}, [session, loading, pathname]);
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <Tabs
