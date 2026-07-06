@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,6 +39,7 @@ import {
   Crown,
   Lock,
   Heart,
+  Eye,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV, EducationEntry, WorkExperienceEntry, ReferenceEntry } from '@/lib/supabase';
@@ -99,6 +101,8 @@ export default function CreateScreen() {
   const [pendingAction, setPendingAction] = useState<'template' | 'ai' | null>(null);
   const [selectedPremiumTemplate, setSelectedPremiumTemplate] = useState<string | null>(null);
   const [favoriteTemplates, setFavoriteTemplates] = useState<Set<string>>(new Set());
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -334,6 +338,16 @@ export default function CreateScreen() {
   };
 
   const handleSelectTemplate = (template: CVTemplate) => {
+    // Show preview modal first
+    setPreviewTemplateId(template.id);
+    setShowPreview(true);
+  };
+
+  const confirmTemplateSelection = () => {
+    const template = CV_TEMPLATES.find(t => t.id === previewTemplateId);
+    if (!template) return;
+
+    setShowPreview(false);
     if (template.isPremium) {
       setSelectedPremiumTemplate(template.id);
       setPendingAction('template');
@@ -341,6 +355,12 @@ export default function CreateScreen() {
     } else {
       setTemplateId(template.id);
     }
+    setPreviewTemplateId(null);
+  };
+
+  const cancelTemplatePreview = () => {
+    setShowPreview(false);
+    setPreviewTemplateId(null);
   };
 
   const handleRewardEarned = () => {
@@ -688,6 +708,17 @@ export default function CreateScreen() {
                     activeOpacity={0.85}
                   >
                     <View style={[styles.templatePreview, { borderColor: t.gradient[0] }]}>
+                      {/* Preview button overlay */}
+                      <TouchableOpacity
+                        style={styles.previewIconBtn}
+                        onPress={(e) => {
+                          e.stopPropagation?.();
+                          setPreviewTemplateId(t.id);
+                          setShowPreview(true);
+                        }}
+                      >
+                        <Eye color={colors.white} size={14} />
+                      </TouchableOpacity>
                       {templateId === t.id && (
                         <View style={[styles.templateCheckBg, { backgroundColor: t.gradient[0] }]}>
                           <Check color={colors.white} size={14} />
@@ -781,6 +812,56 @@ export default function CreateScreen() {
         onRewardEarned={handleRewardEarned}
         rewardType={pendingAction === 'pdf' ? 'pdf_download' : pendingAction === 'template' ? 'premium_template' : 'ai_generation'}
       />
+
+      {/* Template Preview Modal */}
+      <Modal
+        visible={showPreview}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={cancelTemplatePreview}
+      >
+        <SafeAreaView style={styles.previewModalContainer} edges={['top']}>
+          <View style={styles.previewHeader}>
+            <TouchableOpacity style={styles.previewCloseBtn} onPress={cancelTemplatePreview}>
+              <X color={colors.text} size={22} />
+            </TouchableOpacity>
+            <Text style={styles.previewTitle}>
+              Preview: {CV_TEMPLATES.find(t => t.id === previewTemplateId)?.name || 'Template'}
+            </Text>
+            <View style={{ width: 40 }} />
+          </View>
+
+          <ScrollView style={styles.previewScroll} contentContainerStyle={styles.previewContent}>
+            {/* CV Preview */}
+            <View style={styles.previewFrame}>
+              <CVTemplatePreview
+                templateId={previewTemplateId || 'classic'}
+                fullName={fullName}
+                email={email}
+                phone={phone}
+                address={address}
+                summary={summary}
+                skills={skills}
+                education={education}
+                workExperience={workExp}
+                references={references}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Preview Actions */}
+          <View style={styles.previewActions}>
+            <TouchableOpacity style={styles.previewCancelBtn} onPress={cancelTemplatePreview}>
+              <X color={colors.textSecondary} size={18} />
+              <Text style={styles.previewCancelText}>Choose Another</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.previewConfirmBtn} onPress={confirmTemplateSelection}>
+              <Check color={colors.white} size={18} />
+              <Text style={styles.previewConfirmText}>Use This Template</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -792,6 +873,259 @@ function formatTimeAgo(date: Date): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   return `${Math.floor(diff / 3600)}h ago`;
 }
+
+// CV Template Preview Component
+function CVTemplatePreview({
+  templateId,
+  fullName,
+  email,
+  phone,
+  address,
+  summary,
+  skills,
+  education,
+  workExperience,
+  references,
+}: {
+  templateId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  summary: string;
+  skills: string[];
+  education: EducationEntry[];
+  workExperience: WorkExperienceEntry[];
+  references: ReferenceEntry[];
+}) {
+  const template = CV_TEMPLATES.find(t => t.id === templateId) || CV_TEMPLATES[0];
+  const [c1, c2] = template.gradient;
+
+  const hasContent = fullName || email || skills.length > 0 || workExperience.length > 0;
+
+  if (!hasContent) {
+    return (
+      <View style={previewStyles.emptyPreview}>
+        <FileText color={c1} size={48} />
+        <Text style={previewStyles.emptyTitle}>No Data Yet</Text>
+        <Text style={previewStyles.emptyText}>Fill in your details to see a preview</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={previewStyles.container}>
+      {/* Header */}
+      <View style={[previewStyles.header, { backgroundColor: c1 }]}>
+        <Text style={previewStyles.name}>{fullName || 'Your Name'}</Text>
+        <View style={previewStyles.contacts}>
+          {email && <Text style={previewStyles.contact}>{email}</Text>}
+          {phone && <Text style={previewStyles.contact}>{phone}</Text>}
+          {address && <Text style={previewStyles.contact}>{address}</Text>}
+        </View>
+      </View>
+
+      {/* Content */}
+      <View style={previewStyles.content}>
+        {/* Summary */}
+        {summary && (
+          <View style={previewStyles.section}>
+            <Text style={[previewStyles.sectionTitle, { color: c1 }]}>Professional Summary</Text>
+            <Text style={previewStyles.summaryText}>{summary}</Text>
+          </View>
+        )}
+
+        {/* Skills */}
+        {skills.length > 0 && (
+          <View style={previewStyles.section}>
+            <Text style={[previewStyles.sectionTitle, { color: c1 }]}>Skills</Text>
+            <View style={previewStyles.skillsWrap}>
+              {skills.slice(0, 8).map((skill, i) => (
+                <View key={i} style={[previewStyles.skillTag, { backgroundColor: c1 + '15', borderColor: c1 + '40' }]}>
+                  <Text style={[previewStyles.skillText, { color: c1 }]}>{skill}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Work Experience */}
+        {workExperience.length > 0 && (
+          <View style={previewStyles.section}>
+            <Text style={[previewStyles.sectionTitle, { color: c1 }]}>Experience</Text>
+            {workExperience.slice(0, 3).map((exp, i) => (
+              <View key={exp.id || i} style={previewStyles.item}>
+                <View style={previewStyles.itemHeader}>
+                  <Text style={previewStyles.itemTitle}>{exp.position || 'Position'}</Text>
+                  <Text style={previewStyles.itemDate}>{exp.start_date || ''} - {exp.current ? 'Present' : exp.end_date || ''}</Text>
+                </View>
+                <Text style={previewStyles.itemSub}>{exp.company || ''}</Text>
+                {exp.description && (
+                  <Text style={previewStyles.itemDesc} numberOfLines={2}>{exp.description}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Education */}
+        {education.length > 0 && (
+          <View style={previewStyles.section}>
+            <Text style={[previewStyles.sectionTitle, { color: c1 }]}>Education</Text>
+            {education.slice(0, 2).map((edu, i) => (
+              <View key={edu.id || i} style={previewStyles.item}>
+                <View style={previewStyles.itemHeader}>
+                  <Text style={previewStyles.itemTitle}>{edu.degree || 'Degree'}</Text>
+                  <Text style={previewStyles.itemDate}>{edu.start_year || ''} - {edu.end_year || ''}</Text>
+                </View>
+                <Text style={previewStyles.itemSub}>{edu.institution || ''}</Text>
+                {edu.field && <Text style={previewStyles.itemDesc}>{edu.field}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* References */}
+        {references.length > 0 && (
+          <View style={previewStyles.section}>
+            <Text style={[previewStyles.sectionTitle, { color: c1 }]}>References</Text>
+            {references.slice(0, 2).map((ref, i) => (
+              <View key={ref.id || i} style={previewStyles.refItem}>
+                <Text style={previewStyles.refName}>{ref.name || 'Reference'}</Text>
+                <Text style={previewStyles.refRole}>{ref.position || ''} {ref.company ? `at ${ref.company}` : ''}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const previewStyles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    overflow: 'hidden',
+    minHeight: 400,
+  },
+  emptyPreview: {
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 400,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 16,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
+  header: {
+    padding: 20,
+  },
+  name: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.white,
+    marginBottom: 8,
+  },
+  contacts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  contact: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  content: {
+    padding: 16,
+  },
+  section: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: 4,
+  },
+  summaryText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  skillsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  skillTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  skillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  item: {
+    marginBottom: 12,
+  },
+  itemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  itemTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    flex: 1,
+    marginRight: 8,
+  },
+  itemDate: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  itemSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  itemDesc: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  refItem: {
+    marginBottom: 8,
+  },
+  refName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  refRole: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+});
 
 function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
   return (
@@ -1346,6 +1680,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     position: 'relative',
   },
+  previewIconBtn: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
   templateCheckBg: {
     position: 'absolute',
     top: -6,
@@ -1470,5 +1816,89 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
     fontWeight: '600',
+  },
+  // Preview Modal Styles
+  previewModalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  previewCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  previewScroll: {
+    flex: 1,
+  },
+  previewContent: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  previewFrame: {
+    width: '100%',
+    maxWidth: 500,
+    borderRadius: radius.lg,
+    borderWidth: 2,
+    borderColor: colors.border,
+    overflow: 'hidden',
+    backgroundColor: colors.white,
+  },
+  previewActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  previewCancelBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  previewCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  previewConfirmBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+  },
+  previewConfirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.white,
   },
 });
