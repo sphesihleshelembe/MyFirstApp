@@ -9,6 +9,7 @@ import {
   Switch,
   ActivityIndicator,
   Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -27,6 +28,7 @@ import {
   Palette,
   AlertTriangle,
   X,
+  Database,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { colors, spacing, radius } from '@/constants/theme';
@@ -64,6 +66,12 @@ export default function SettingsScreen() {
 
   const showAlert = (title: string, message: string) => {
     Alert.alert(title, message);
+  };
+
+  const openURL = (url: string) => {
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) Linking.openURL(url);
+    });
   };
 
   return (
@@ -164,7 +172,14 @@ export default function SettingsScreen() {
               icon={<Shield color={colors.primaryLight} size={20} />}
               label="Privacy Policy"
               desc="How we handle your data"
-              onPress={() => showAlert('Privacy', 'Your data is stored securely and never shared with third parties.')}
+              onPress={() => openURL('https://cv-craft-ai.vercel.app/privacy-policy')}
+            />
+            <View style={styles.divider} />
+            <SettingRow
+              icon={<Database color={colors.primaryLight} size={20} />}
+              label="Data Deletion Policy"
+              desc="Request data removal"
+              onPress={() => openURL('https://cv-craft-ai.vercel.app/data-deletion')}
             />
             <View style={styles.divider} />
             <SettingRow

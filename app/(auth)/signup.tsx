@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -232,12 +233,18 @@ export default function SignupScreen() {
             </View>
 
             {/* Terms */}
-            <Text style={styles.termsText}>
-              By creating an account, you agree to our{' '}
-              <Text style={styles.termsLink}>Terms of Service</Text>
-              {' '}and{' '}
-              <Text style={styles.termsLink}>Privacy Policy</Text>
-            </Text>
+            <View style={styles.termsRow}>
+              <Text style={styles.termsText}>
+                By creating an account, you agree to our{' '}
+              </Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://cv-craft-ai.vercel.app/privacy-policy')}>
+                <Text style={styles.termsLink}>Privacy Policy</Text>
+              </TouchableOpacity>
+              <Text style={styles.termsText}> and </Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://cv-craft-ai.vercel.app/data-deletion')}>
+                <Text style={styles.termsLink}>Data Deletion Policy</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* Submit */}
             <TouchableOpacity
@@ -516,11 +523,17 @@ const styles = StyleSheet.create({
     color: colors.success,
     fontWeight: '500',
   },
+  termsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
   termsText: {
     fontSize: 12,
     color: colors.textMuted,
-    textAlign: 'center',
-    marginVertical: spacing.lg,
     lineHeight: 18,
   },
   termsLink: {
