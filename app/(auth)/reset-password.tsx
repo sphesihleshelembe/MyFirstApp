@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { colors, spacing, radius } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Lock, Eye, EyeOff } from 'lucide-react-native';
 
 export default function ResetPassword() {
@@ -86,6 +87,7 @@ export default function ResetPassword() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar style="light" />
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} size="large" />
           <Text style={styles.loadingText}>Verifying reset link...</Text>
@@ -97,6 +99,7 @@ export default function ResetPassword() {
   if (success) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar style="light" />
         <View style={styles.centered}>
           <View style={styles.successIcon}>
             <Lock color={colors.success} size={32} />
@@ -110,6 +113,7 @@ export default function ResetPassword() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar style="light" />
       <View style={styles.content}>
         <View style={styles.iconBg}>
           <Lock color={colors.primaryLight} size={28} />
