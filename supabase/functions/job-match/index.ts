@@ -44,6 +44,8 @@ interface MatchResult {
 }
 
 function analyzeJobMatch(
+    console.log("JD RECEIVED:", jobDescription);
+    console.log("SKILLS RECEIVED:", cvSkills);
   summary: string,
   skills: string[],
   education: any[],
@@ -58,23 +60,35 @@ function analyzeJobMatch(
 
   // 1. Extract keywords and requirements from job description
   const jobKeywords = extractJobKeywords(jdLower);
+   console.log("FINAL KEYWORDS:", jobKeywords);
 
-  // 2. Find matched skills (exact + near + context)
+  const jobRequirements = extractJobRequirements(jdLower);
+
+
+
+  // 2. Find matched skills (exact + near)
   const matched: string[] = [];
   const missing: string[] = [];
 
   for (const kw of jobKeywords) {
-    if (isSkillMatch(kw, cvSkills, cvSummary, cvExp)) {
+    if (isSkillMatch(kw, cvSkills, cvSummary)) {
       matched.push(kw);
     } else if (isNearMatch(kw, cvSkills, cvSummary, cvExp)) {
       matched.push(kw);
-    } else if (isHardSkill(kw)) {
-      missing.push(kw);
+    } else {
+      // Check if it's a truly required skill (not a soft skill)
+      if (isHardSkill(kw)) {
+        missing.push(kw);
+      }
     }
+    
   }
+  console.log("MATCHED:", matched);
+console.log("MISSING:", missing);
+console.log("JD INPUT:", jobDescription);
 
-  // 3. Calculate match score with improved algorithm
-  const score = calculateScore(matched, missing, jobKeywords, cvSkills, cvExp, cvEdu, cvSummary, jdLower);
+  // 3. Calculate match score
+  const score = calculateScore(matched, missing, jobKeywords, jobRequirements, cvSkills, cvExp, cvEdu, cvSummary, jdLower);
 
   // 4. Identify CV strengths relevant to this job
   const strengths = identifyStrengths(cvSkills, cvExp, cvEdu, cvSummary, jdLower);
@@ -94,74 +108,61 @@ function analyzeJobMatch(
 
 function extractJobKeywords(jd: string): string[] {
   const keywords = new Set<string>();
+  const text = jd.toLowerCase();
 
-  // Known technical skills to look for
+  const directMatches = text.match(
+  /\b(javascript|typescript|python|java|react|node\.?js|aws|docker|sql|mongodb|html|css)\b/gi
+);
+
+if (directMatches) {
+  directMatches.forEach(m => keywords.add(m.toLowerCase()));
+}
+  
+
+  // 1. Extract known technical skills FIRST (high precision)
   const techPatterns = [
-    /\b(javascript|typescript|js|ts)\b/gi,
-    /\b(python|java|c\+\+|c#|csharp|ruby|go|golang|rust|swift|kotlin|php|scala|r|matlab)\b/gi,
-    /\b(react|angular|vue|svelte|next\.?js|nuxt)\b/gi,
-    /\b(node\.?js|express|django|flask|spring|rails|laravel|fastapi|\.net)\b/gi,
-    /\b(aws|azure|gcp|google cloud)\b/gi,
-    /\b(docker|kubernetes|k8s|terraform|ansible|jenkins|ci\/cd|github actions)\b/gi,
-    /\b(sql|mysql|postgresql|postgres|mongodb|redis|dynamodb|elasticsearch|firebase|supabase)\b/gi,
-    /\b(git|github|gitlab|bitbucket|jira|confluence)\b/gi,
-    /\b(figma|sketch|adobe xd|photoshop|illustrator|invision)\b/gi,
-    /\b(html|css|sass|scss|tailwind|bootstrap|material ui)\b/gi,
-    /\b(rest|api|graphql|grpc|websocket|microservices)\b/gi,
-    /\b(agile|scrum|kanban|lean|waterfall)\b/gi,
-    /\b(mobile|ios|android|react native|flutter|expo)\b/gi,
-    /\b(machine learning|ml|ai|deep learning|tensorflow|pytorch|nlp|computer vision)\b/gi,
-    /\b(data analysis|data science|pandas|numpy|tableau|power bi|excel|analytics)\b/gi,
-    /\b(testing|jest|mocha|cypress|selenium|unit test|e2e|qa)\b/gi,
-    /\b(security|oauth|jwt|encryption|penetration testing|owasp)\b/gi,
-    /\b(salesforce|hubspot|sap|oracle|servicenow|workday)\b/gi,
-    /\b(project management|pmp|prince2|asana|trello)\b/gi,
-    /\b(marketing|seo|sem|google analytics|content strategy|social media)\b/gi,
-    /\b(sales|negotiation|crm|account management|business development)\b/gi,
-    /\b(finance|accounting|financial analysis|auditing|bookkeeping)\b/gi,
-    /\b(photoshop|illustrator|premiere|after effects)\b/gi,
-    /\b(office|microsoft office|word|excel|powerpoint|sharepoint)\b/gi,
+    /\b(javascript|typescript|python|java|c\+\+|c#|go|rust|php|ruby)\b/gi,
+    /\b(react|angular|vue|next\.?js|node\.?js|express|django|flask)\b/gi,
+    /\b(aws|azure|gcp|docker|kubernetes|terraform)\b/gi,
+    /\b(sql|mysql|postgresql|mongodb|redis)\b/gi,
+    /\b(html|css|tailwind|bootstrap)\b/gi,
+    /\b(git|github|ci\/cd)\b/gi,
+    /\b(api|rest|graphql)\b/gi,
   ];
 
   for (const pattern of techPatterns) {
-    const matches = jd.match(pattern);
+    const matches = text.match(pattern);
     if (matches) {
-      matches.forEach((m) => keywords.add(m.toLowerCase().trim()));
+      matches.forEach(m => keywords.add(m.toLowerCase()));
     }
   }
 
-  // Also extract significant words from requirements section
-  const reqSection = jd.match(/(?:requirements|qualifications|must have|nice to have|preferred|required|you (?:should|will|need|must))[:\s]+([\s\S]*?)(?:(?:responsibilities|duties|about|we offer|benefits|what you|who you|$))/i);
-  if (reqSection) {
-    const reqText = reqSection[1];
-    const phrases = reqText.match(/\b[a-z][a-z\s+\-.#]+\b/gi);
-    if (phrases) {
-      phrases.forEach(p => {
-        const trimmed = p.trim().toLowerCase();
-        if (trimmed.length >= 3 && trimmed.length <= 30 && !isSoftTerm(trimmed)) {
-          keywords.add(trimmed);
-        }
-      });
-    }
+  // 2. Extract meaningful words (BUT NOT EVERYTHING)
+  const words = text
+    .replace(/[^a-z0-9+#. ]/g, " ")
+    .split(/\s+/)
+    .filter(w =>
+      w.length >= 4 &&
+      w.length <= 25 &&
+      !isSoftTerm(w)
+    );
+
+  // frequency filter (VERY IMPORTANT)
+  const freq: Record<string, number> = {};
+  for (const w of words) {
+    freq[w] = (freq[w] || 0) + 1;
   }
+
+  Object.entries(freq).forEach(([word, count]) => {
+    if (count >= 1) {
+      keywords.add(word);
+    }
+  });
 
   return [...keywords];
 }
 
-function isSoftTerm(term: string): boolean {
-  const softTerms = [
-    "communication", "leadership", "teamwork", "team player", "problem solving",
-    "critical thinking", "attention to detail", "detail oriented", "self starter",
-    "proactive", "organized", "time management", "adaptability", "flexibility",
-    "creativ", "collaborat", "passion", "enthusias", "motivat", "driver",
-    "strong", "excellent", "good", "great", "ability", "willing", "able to",
-    "experience", "years", "knowledge", "understanding", "familiar", "proficien",
-    "work", "working", "environment", "fast paced", "dynamic", "hands on",
-  ];
-  return softTerms.some(t => term.includes(t));
-}
-
-function isSkillMatch(keyword: string, cvSkills: string[], cvSummary: string, cvExp: any[]): boolean {
+function isSkillMatch(keyword: string, cvSkills: string[], cvSummary: string): boolean {
   const kw = keyword.toLowerCase();
   // Exact match in CV skills
   if (cvSkills.some(s => s === kw || s === keyword)) return true;
@@ -170,12 +171,6 @@ function isSkillMatch(keyword: string, cvSkills: string[], cvSummary: string, cv
   if (cvSkills.some(s => s.replace(/[\s.\-+#]/g, "") === kwNorm)) return true;
   // In summary text
   if (cvSummary.includes(kw)) return true;
-  // Check work experience
-  for (const exp of cvExp) {
-    const desc = (exp.description || "").toLowerCase();
-    const pos = (exp.position || "").toLowerCase();
-    if (desc.includes(kw) || pos.includes(kw)) return true;
-  }
   return false;
 }
 
@@ -185,49 +180,44 @@ function isNearMatch(keyword: string, cvSkills: string[], cvSummary: string, cvE
   // Common near-match mappings
   const nearMatches: Record<string, string[]> = {
     "js": ["javascript"],
-    "javascript": ["js", "typescript", "ts", "nodejs", "node.js"],
-    "typescript": ["ts", "javascript", "js"],
-    "python": ["django", "flask", "fastapi", "data science", "ml"],
-    "react": ["react native", "next.js", "nextjs", "jsx", "frontend"],
-    "node.js": ["nodejs", "express", "node", "backend"],
-    "nodejs": ["node.js", "express", "backend"],
-    "aws": ["amazon web services", "cloud", "ec2", "lambda", "s3"],
+    "javascript": ["js", "typescript", "ts"],
+    "typescript": ["ts", "javascript"],
+    "python": ["django", "flask", "fastapi"],
+    "react": ["react native", "next.js", "nextjs"],
+    "node.js": ["nodejs", "express", "node"],
+    "nodejs": ["node.js", "express"],
+    "aws": ["amazon web services", "cloud"],
     "azure": ["microsoft azure", "cloud"],
     "gcp": ["google cloud", "google cloud platform"],
-    "kubernetes": ["k8s", "docker", "containers", "devops"],
-    "docker": ["kubernetes", "containerization", "containers", "devops"],
-    "sql": ["mysql", "postgresql", "postgres", "sqlite", "database", "db"],
+    "kubernetes": ["k8s", "docker"],
+    "docker": ["kubernetes", "containerization"],
+    "sql": ["mysql", "postgresql", "postgres", "sqlite"],
     "postgresql": ["postgres", "sql", "database"],
-    "mongodb": ["nosql", "database", "db"],
-    "html": ["css", "web", "frontend", "markup"],
-    "css": ["html", "sass", "scss", "tailwind", "styling", "frontend"],
-    "rest": ["api", "http", "web services"],
-    "graphql": ["api", "rest", "apollo"],
-    "api": ["rest", "graphql", "backend", "web services"],
-    "mobile": ["ios", "android", "react native", "flutter", "mobile development"],
-    "ios": ["mobile", "swift", "apple", "iphone", "ipad"],
-    "android": ["mobile", "kotlin", "java", "google"],
-    "figma": ["design", "ui/ux", "prototype", "wireframe"],
-    "machine learning": ["ml", "ai", "data science", "python", "tensorflow", "pytorch"],
-    "data analysis": ["analytics", "data science", "sql", "python", "excel", "tableau"],
-    "git": ["github", "gitlab", "version control", "source control"],
-    "github": ["git", "gitlab", "version control"],
+    "mongodb": ["nosql", "database"],
+    "html": ["css", "web"],
+    "css": ["html", "sass", "scss", "tailwind"],
+    "rest": ["api", "http"],
+    "graphql": ["api", "rest"],
+    "mobile": ["ios", "android", "react native", "flutter"],
+    "ios": ["mobile", "swift", "apple"],
+    "android": ["mobile", "kotlin", "java"],
+    "figma": ["design", "ui/ux"],
+    "machine learning": ["ml", "ai", "data science", "python"],
+    "data analysis": ["analytics", "data science", "sql", "python"],
   };
 
   const nearList = nearMatches[kw];
   if (nearList) {
     if (cvSkills.some(s => nearList.includes(s))) return true;
     if (nearList.some(n => cvSummary.includes(n))) return true;
-    // Check experience descriptions
-    for (const exp of cvExp) {
-      const desc = (exp.description || "").toLowerCase();
-      const pos = (exp.position || "").toLowerCase();
-      if (nearList.some(n => desc.includes(n) || pos.includes(n))) return true;
-    }
   }
 
-  // Partial match - if keyword is part of a skill or vice versa
-  if (cvSkills.some(s => s.includes(kw) || kw.includes(s))) return true;
+  // Check experience descriptions
+  for (const exp of cvExp) {
+    const desc = (exp.description || "").toLowerCase();
+    const pos = (exp.position || "").toLowerCase();
+    if (desc.includes(kw) || pos.includes(kw)) return true;
+  }
 
   return false;
 }
@@ -235,15 +225,19 @@ function isNearMatch(keyword: string, cvSkills: string[], cvSummary: string, cvE
 function isHardSkill(keyword: string): boolean {
   const kw = keyword.toLowerCase().trim();
 
-  if (isSoftTerm(kw)) return false;
-  if (kw.length <= 2) return false;
-
-  // Additional irrelevant terms
-  const irrelevant = [
-    "required", "preferred", "nice to have", "must have", "bonus", "ideal",
-    "would be", "beneficial", "plus", "advantage", "desired", "optional",
+  // Soft/irrelevant terms to skip
+  const softTerms = [
+    "communication", "leadership", "teamwork", "team player", "problem solving",
+    "critical thinking", "attention to detail", "detail oriented", "self starter",
+    "proactive", "organized", "time management", "adaptability", "flexibility",
+    "creativ", "collaborat", "passion", "enthusias", "motivat", "driver",
+    "strong", "excellent", "good", "great", "ability", "willing", "able to",
+    "experience", "years", "knowledge", "understanding", "familiar", "proficien",
+    "work", "working", "environment", "fast paced", "dynamic", "hands on",
   ];
-  if (irrelevant.some(t => kw.includes(t))) return false;
+
+  if (softTerms.some(t => kw.includes(t))) return false;
+  if (kw.length <= 2) return false;
 
   return true;
 }
@@ -252,6 +246,7 @@ function calculateScore(
   matched: string[],
   missing: string[],
   jobKeywords: string[],
+  jobReqs: { hard: string[]; soft: string[]; experience: string },
   cvSkills: string[],
   cvExp: any[],
   cvEdu: any[],
@@ -260,84 +255,79 @@ function calculateScore(
 ): number {
   let score = 0;
 
-  // === Base score for having content (max 25 points) ===
-  // Give credit just for having a CV with content
-  if (cvSkills.length > 0) score += Math.min(10, cvSkills.length * 2); // up to 10 pts
-  if (cvExp.length > 0) score += Math.min(10, cvExp.length * 3); // up to 10 pts
-  if (cvEdu.length > 0) score += 5; // 5 pts for education
-
-  // === Skill matching (max 35 points) ===
+  // 1. Skill match scoring (0-50 points)
   const hardJobSkills = jobKeywords.filter(isHardSkill);
   if (hardJobSkills.length > 0) {
     const matchedHard = matched.filter(isHardSkill);
-    const matchRatio = matchedHard.length / hardJobSkills.length;
-    score += matchRatio * 35;
+    score += (matchedHard.length / hardJobSkills.length) * 50;
   } else if (jobKeywords.length > 0) {
-    // If no hard skills detected, use all keywords
-    score += (matched.length / jobKeywords.length) * 35;
-  } else {
-    // No keywords found in JD - give partial credit for having skills
-    score += Math.min(15, cvSkills.length * 3);
+    score += (matched.length / jobKeywords.length) * 50;
   }
 
-  // === Experience relevance (max 25 points) ===
+  // 2. Experience relevance (0-25 points)
   if (cvExp.length > 0) {
-    let maxRelevance = 0;
+    let expRelevance = 0;
     for (const exp of cvExp) {
       const pos = (exp.position || "").toLowerCase();
       const desc = (exp.description || "").toLowerCase();
       const company = (exp.company || "").toLowerCase();
       const combined = `${pos} ${desc} ${company}`;
 
-      // Count keyword overlaps
+      // Check how many job keywords appear in this experience
       let matchCount = 0;
       for (const kw of jobKeywords) {
         if (combined.includes(kw)) matchCount++;
       }
-      const relevance = Math.min(1, matchCount / Math.max(3, jobKeywords.length * 0.5));
-      maxRelevance = Math.max(maxRelevance, relevance);
+      expRelevance = Math.max(expRelevance, Math.min(1, matchCount / Math.max(3, jobKeywords.length)));
     }
-    score += maxRelevance * 25;
+    score += expRelevance * 25;
 
-    // Experience years bonus
-    const totalYears = estimateYears(cvExp);
-    if (totalYears >= 5) score += 5;
-    else if (totalYears >= 2) score += 3;
+    // Experience duration match
+    if (jobReqs.experience) {
+      const reqYears = parseInt(jobReqs.experience);
+      const actualYears = estimateYears(cvExp);
+      if (actualYears >= reqYears) {
+        score += 5; // bonus for meeting experience requirement
+      }
+    }
+  } else {
+    score += 5; // small baseline
   }
 
-  // === Education relevance (max 10 points) ===
+  // 3. Education relevance (0-15 points)
   if (cvEdu.length > 0) {
+    // Check if job mentions specific education requirements
     const eduKeywords = ["bachelor", "master", "phd", "degree", "diploma", "bsc", "msc", "mba", "b.s", "m.s", "b.a", "m.a"];
     const jdRequiresEdu = eduKeywords.some(k => jd.includes(k));
 
-    if (jdRequiresEdu) {
-      // Check for relevant field of study
+    if (jdRequiresEdu && cvEdu.length > 0) {
+      // Has education when required
       for (const edu of cvEdu) {
         const field = (edu.field || "").toLowerCase();
         const degree = (edu.degree || "").toLowerCase();
-        // Check if field or degree keywords appear in JD
-        const fieldWords = field.split(/\s+/).filter(w => w.length > 3);
-        const fieldInJd = fieldWords.some(word => jd.includes(word));
+        // Check if field is mentioned in JD
+        const fieldInJd = field.split(/\s+/).some(word => word.length > 3 && jd.includes(word));
         if (fieldInJd) {
-          score += 8;
+          score += 12;
           break;
         }
       }
-      score += 2; // baseline for having education when required
+      score += 3; // baseline for having any degree
     } else {
-      score += 5; // some credit for education
+      score += 8;
     }
   }
 
-  // === Summary alignment (max 5 points) ===
-  if (cvSummary && cvSummary.length > 20) {
-    const summaryWords = cvSummary.split(/\s+/).filter(w => w.length > 3);
+  // 4. Summary alignment (0-10 points)
+  if (cvSummary) {
+    const summaryWords = new Set(cvSummary.split(/\s+/).filter(w => w.length > 3));
+    const jdWords = new Set(jd.split(/\s+/).filter(w => w.length > 3));
     let overlap = 0;
     for (const word of summaryWords) {
-      if (jd.includes(word)) overlap++;
+      if (jdWords.has(word)) overlap++;
     }
-    const overlapRatio = Math.min(1, overlap / Math.max(1, summaryWords.length));
-    score += overlapRatio * 5;
+    const overlapRatio = overlap / Math.max(1, summaryWords.size);
+    score += overlapRatio * 10;
   }
 
   return score;
@@ -370,7 +360,7 @@ function identifyStrengths(
   if (directlyMatched.length >= 3) {
     strengths.push(`${directlyMatched.length} skills directly match job requirements (${directlyMatched.slice(0, 5).join(", ")})`);
   } else if (directlyMatched.length > 0) {
-    strengths.push(`Key matching skills: ${directlyMatched.join(", ")}`);
+    strengths.push(`Skills directly match: ${directlyMatched.join(", ")}`);
   }
 
   // Experience relevance
@@ -387,7 +377,7 @@ function identifyStrengths(
 
     if (matchCount >= 4) {
       const title = exp.position || exp.company || "Previous role";
-      strengths.push(`${title} experience aligns well with this position`);
+      strengths.push(`${title} has strong alignment with this position`);
       if (strengths.length >= 2) break;
     }
   }
@@ -397,7 +387,7 @@ function identifyStrengths(
     const field = (edu.field || "").toLowerCase();
     const degree = (edu.degree || "").toLowerCase();
     if (field && jd.includes(field)) {
-      strengths.push(`${degree ? degree + " in " : ""}${field} education directly relevant`);
+      strengths.push(`${degree} in ${field} directly relevant to role`);
       break;
     }
   }
@@ -408,8 +398,6 @@ function identifyStrengths(
     strengths.push(`${totalYears}+ years of professional experience`);
   } else if (totalYears >= 2) {
     strengths.push(`${totalYears} years of relevant experience`);
-  } else if (totalYears >= 1) {
-    strengths.push(`Has professional work experience`);
   }
 
   // Ensure at least 1 strength
@@ -418,10 +406,8 @@ function identifyStrengths(
       strengths.push(`${cvSkills.length} professional skills listed`);
     } else if (cvExp.length > 0) {
       strengths.push("Has professional work experience");
-    } else if (cvSummary) {
-      strengths.push("Has a professional summary");
     } else {
-      strengths.push("Ready to develop career");
+      strengths.push("Available and ready for new opportunities");
     }
   }
 
@@ -438,54 +424,80 @@ function generateRecommendations(
 ): string[] {
   const recs: string[] = [];
 
-  // Missing skills recommendations
+  // Missing skills recommendations (most impactful)
   const topMissing = missing.slice(0, 3);
   for (const skill of topMissing) {
+    // Check if it's a tool/framework or a domain
     const tools = ["aws", "azure", "gcp", "docker", "kubernetes", "figma", "jira",
       "salesforce", "tableau", "power bi", "git", "jenkins", "terraform"];
     const frameworks = ["react", "angular", "vue", "django", "flask", "spring",
       "express", "next.js", "nuxt", "flutter", "swift", "kotlin"];
 
     if (tools.some(t => skill.includes(t))) {
-      recs.push(`Add ${skill} experience — consider a personal project or certification`);
+      recs.push(`Add ${skill} experience — consider a personal project or certification to demonstrate proficiency`);
     } else if (frameworks.some(f => skill.includes(f))) {
-      recs.push(`Add ${skill} project experience — build a sample project or contribute to open-source`);
+      recs.push(`Add ${skill} project experience — build a sample project or contribute to an open-source ${skill} codebase`);
     } else {
-      recs.push(`Add ${skill} to your skills section and demonstrate experience with it`);
+      recs.push(`Add ${skill} to your skills and demonstrate experience with it in your work history`);
     }
   }
 
   // Summary optimization
-  if (!cvSummary || cvSummary.length < 50) {
-    const jdKeyPhrases = extractTopKeywords(jd, 3);
-    recs.push(`Add a professional summary with these job keywords: ${jdKeyPhrases.join(", ")}`);
+const summaryWords = new Set(
+  (cvSummary || "")
+    .toLowerCase()
+    .split(/\W+/)
+    .filter(w => w.length > 1)
+);
+
+let overlap = 0;
+
+for (const word of summaryWords) {
+  if (jd.toLowerCase().includes(word)) {
+    overlap++;
   }
+}
+
+if (!cvSummary || overlap < 5) {
+  const jdKeyPhrases = extractTopKeywords(jd, 8);
+
+  recs.push(
+    `Strengthen your professional summary by naturally incorporating relevant keywords such as ${jdKeyPhrases.join(", ")}.`
+  );
+}
 
   // Experience recommendations
   if (cvExp.length === 0) {
-    recs.push("Add work experience — even internships, freelance work, or academic projects help");
+    recs.push("Add work experience — even internships, freelance work, or academic projects strengthen your application");
   } else {
-    // Check if experience descriptions are missing
+    // Check if experience descriptions mention job-relevant keywords
     for (const exp of cvExp) {
-      const desc = (exp.description || "").trim();
-      if (!desc) {
-        recs.push(`Add achievement-focused bullets to your ${exp.position || exp.company || "work"} entry`);
+      const desc = (exp.description || "").toLowerCase();
+      let descOverlap = 0;
+      for (const kw of missing.slice(0, 5)) {
+        if (desc.includes(kw)) descOverlap++;
+      }
+      // If descriptions are empty
+      if (!desc.trim()) {
+        recs.push(`Add achievement-focused description to your ${exp.position || exp.company || "work experience"} entry`);
         break;
       }
     }
   }
 
-  // Education recommendation
+  // Education relevance
   if (cvEdu.length === 0) {
     const jdEduMentioned = /degree|bachelor|master|diploma|education/i.test(jd);
     if (jdEduMentioned) {
-      recs.push("Add your educational background — this job values formal education");
+      recs.push("This job requires education — add your degree and field of study");
     }
   }
 
   // Ensure 3-5 recommendations
-  if (recs.length < 3 && missing.length > 3) {
-    recs.push(`Consider gaining experience with: ${missing.slice(3, 6).join(", ")}`);
+  if (recs.length < 3) {
+    if (missing.length > 3) {
+      recs.push(`Consider gaining experience with: ${missing.slice(3, 6).join(", ")}`);
+    }
   }
 
   return recs.slice(0, 5);
@@ -502,7 +514,7 @@ function extractTopKeywords(jd: string, count: number): string[] {
     "looking", "join", "about", "must", "able", "required", "preferred",
   ]);
 
-  const words = jd.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !stopWords.has(w));
+  const words = jd.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
   const freq: Record<string, number> = {};
   for (const w of words) {
     freq[w] = (freq[w] || 0) + 1;

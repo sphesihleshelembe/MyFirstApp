@@ -77,64 +77,97 @@ export default function MatchScreen() {
   const [result, setResult] = useState<MatchResult | null>(null);
   const [showCVPicker, setShowCVPicker] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!user) return;
-      (async () => {
-        const { data } = await supabase
-          .from('cvs')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false });
-        if (data && data.length > 0) {
-          setCvs(data as CV[]);
-          setSelectedCV(data[0]);
-        }
-        setLoadingCVs(false);
-      })();
-    }, [user])
-  );
+useFocusEffect(
+  useCallback(() => {
+    if (!user) return;
 
+    setLoadingCVs(true);
+
+    (async () => {
+      const { data } = await supabase
+        .from('cvs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        setCvs(data as CV[]);
+        setSelectedCV(data[0]);
+      }
+
+      setLoadingCVs(false);
+    })();
+  }, [user])
+);
   const analyzeMatch = async () => {
-    if (!selectedCV) {
-      Alert.alert('No CV', 'Please create a CV first before matching.');
-      return;
-    }
-    if (!jobDescription.trim()) {
-      Alert.alert('Missing Job Description', 'Paste a job description to analyze the match.');
-      return;
-    }
+  if (!selectedCV) {
+    Alert.alert('No CV', 'Please create a CV first before matching.');
+    return;
+  }
 
-    setLoading(true);
-    setResult(null);
-    try {
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-      const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
-      const response = await fetch(`${supabaseUrl}/functions/v1/job-match`, {
+  if (!jobDescription.trim()) {
+    Alert.alert(
+      'Missing Job Description',
+      'Paste a job description to analyze the match.'
+    );
+    return;
+  }
+
+  setLoading(true);
+  setResult(null);
+
+  try {
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      Alert.alert(
+        'Config Error',
+        'Missing Supabase environment variables'
+      );
+      return;
+    }
+    console.log("CALLING JOB MATCH FUNCTION");
+console.log("URL:", `${supabaseUrl}/functions/v1/job-match`);
+
+    const response = await fetch(
+      `${supabaseUrl}/functions/v1/job-match`,
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-          'apikey': supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          apikey: supabaseKey,
         },
         body: JSON.stringify({
-          summary: selectedCV.summary,
-          skills: selectedCV.skills,
-          education: selectedCV.education,
-          workExperience: selectedCV.work_experience,
+          summary: selectedCV.summary || '',
+          skills: selectedCV.skills || [],
+          education: selectedCV.education || '',
+          workExperience: selectedCV.work_experience || '',
           jobDescription,
         }),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      setResult(data as MatchResult);
-    } catch (e) {
-      Alert.alert('Error', 'Failed to analyze job match. Please try again.');
-    }
-    setLoading(false);
-  };
+      }
+    );
 
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+
+    console.log("RAW MATCH RESPONSE:");
+    console.log(JSON.stringify(data, null, 2));
+
+    if (data.error) throw new Error(data.error);
+
+    setResult(data as MatchResult);
+  } catch (e) {
+    Alert.alert(
+      'Error',
+      'Failed to analyze job match. Please try again.'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -151,8 +184,12 @@ export default function MatchScreen() {
             {selectedCV ? (
               <TouchableOpacity
                 style={styles.cvSelector}
-                onPress={() => cvs.length > 1 && setShowCVPicker(!showCVPicker)}
-                activeOpacity={cvs.length > 1 ? 0.7 : 1}
+onPress={() => {
+  if (cvs.length > 1) {
+    setShowCVPicker(prev => !prev);
+  }
+}}               
+activeOpacity={cvs.length > 1 ? 0.7 : 1}
               >
                 <View style={styles.cvSelectorIcon}>
                   <FileText color={colors.primaryLight} size={20} />
@@ -512,3 +549,4 @@ const styles = StyleSheet.create({
   listBulletNum: { fontSize: 11, fontWeight: '700', color: colors.warning },
   listText: { flex: 1, fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
 });
+

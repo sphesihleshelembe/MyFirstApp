@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "ai.cv.builder.app",
+    "name": "Cv Builder",
     "slug": "bolt-expo-nativewind",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cvbuilder",
@@ -16,10 +16,19 @@
       "output": "single"
     },
     "plugins": [
-      "expo-router",
-      "expo-font",
-      "expo-web-browser"
-    ],
+  "expo-router",
+  "expo-font",
+  "expo-web-browser",
+  [
+    "expo-splash-screen",
+    {
+      "image": "./assets/images/ssplash.png",
+      "imageWidth": 360,
+      "resizeMode": "contain",
+      "backgroundColor": "#0F172A"
+    }
+  ]
+],
     "experiments": {
       "typedRoutes": true
     },
@@ -30,7 +39,8 @@
       }
     },
     "android": {
-      "package": "com.sphesihleshelembe.cvbuilder"
+      "package": "com.sphesihleshelembe.cvbuilder",
+      "versionCode": 3
     }
   }
 }

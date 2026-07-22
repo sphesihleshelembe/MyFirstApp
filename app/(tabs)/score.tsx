@@ -530,3 +530,4 @@ const styles = StyleSheet.create({
   feedbackBulletNum: { fontSize: 11, fontWeight: '700' },
   feedbackText: { flex: 1, fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
 });
+

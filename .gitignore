@@ -33,3 +33,13 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Visual Studio
+.vs/
+
+# IDE
+.idea/
+
+# Android build output
+android/.gradle/
+android/app/build/

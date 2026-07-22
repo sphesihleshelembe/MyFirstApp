@@ -1,79 +1,58 @@
-import { Platform, Alert, ToastAndroid } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+
 import { CV } from '@/lib/supabase';
 import { CVTemplate, CV_TEMPLATES } from '@/lib/templates';
 import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
+import { Alert, Platform } from "react-native";
+import { savePdf } from "@/services/export";
 
-export const downloadCVAsPDF = async (cv: CV, template?: CVTemplate) => {
-  try {
-    const t =
-      template ||
-      CV_TEMPLATES.find(tp => tp.id === cv.template_id) ||
-      CV_TEMPLATES[0];
+export const exportCVAsPDF = async (cv: CV, template?: CVTemplate) => {
+  const t = template || CV_TEMPLATES.find(tp => tp.id === cv.template_id) || CV_TEMPLATES[0];
+  const html = generatePDFHtml(cv, t);
 
-    const html = generatePDFHtml(cv, t);
 
-    // Web download
-    if (Platform.OS === 'web') {
-      await triggerPDFDownload(
-        html,
-        `${cv.full_name || 'CV'}_Resume.pdf`
-      );
-      return;
-    }
-
-    // Generate PDF
-    const Print = await import('expo-print');
-    const { uri } = await Print.printToFileAsync({ html });
-
-    // Ask user where to save
-    const permissions =
-      await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-
-    if (!permissions.granted) {
-      Alert.alert(
-        'Download Cancelled',
-        'No folder was selected.'
-      );
-      return;
-    }
-
-    // Read generated PDF
-    const pdfBase64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    // Create file in selected folder
-    const fileUri =
-      await FileSystem.StorageAccessFramework.createFileAsync(
-        permissions.directoryUri,
-        `${cv.full_name || 'CV'}_Resume.pdf`,
-        'application/pdf'
-      );
-
-    // Write PDF data
-    await FileSystem.writeAsStringAsync(fileUri, pdfBase64, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    // Success message
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(
-        'CV saved successfully',
-        ToastAndroid.LONG
-      );
-    } else {
-      Alert.alert(
-        'Download Complete',
-        'Your CV has been saved successfully.'
-      );
-    }
-  } catch (error) {
-    console.error('PDF download error:', error);
-
-    Alert.alert(
-      'Download Failed',
-      'Unable to save the CV. Please try again.'
-    );
+  if (Platform.OS === 'web') {
+    await triggerPDFDownload(html, `${cv.full_name || 'CV'}_Resume.pdf`);
+    return;
   }
+
+  // For native, fall back to expo-print + sharing
+  const Print = await import('expo-print');
+  const Sharing = await import("expo-sharing");
+  const { uri } = await Print.printToFileAsync({ html });
+  Alert.alert(
+  "Export CV",
+  "How would you like to export your CV?",
+  [
+    {
+      text: "Save to Device",
+      onPress: async () => {
+        const success = await savePdf(
+          uri,
+         `${cv.full_name || "CV"} - CV.pdf`        );
+
+       if (success) {
+  Alert.alert(
+    "Success",
+    Platform.OS === "android"
+      ? "PDF saved successfully."
+      : "Choose 'Save to Files' from the share sheet to save your PDF."
+  );
+}
+      },
+    },
+   {
+  text: "Share PDF",
+  onPress: async () => {
+    await Sharing.shareAsync(uri, {
+      mimeType: "application/pdf",
+      dialogTitle: "Share CV",
+    });
+  },
+},
+    {
+      text: "Cancel",
+      style: "cancel",
+    },
+  ]
+);
 };

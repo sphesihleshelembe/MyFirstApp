@@ -36,7 +36,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
 import { colors, spacing, radius, typography } from '@/constants/theme';
-import { downloadCVAsPDF } from '@/utils/cvExport';
+import { exportCVAsPDF } from '@/utils/cvExport';
 import { Alert } from 'react-native';
 import { CV_TEMPLATES } from '@/lib/templates';
 
@@ -97,7 +97,7 @@ export default function HomeScreen() {
       CV_TEMPLATES.find(t => t.id === cv.template_id) ||
       CV_TEMPLATES[0];
       
-     await downloadCVAsPDF(cv, template);
+     await exportCVAsPDF(cv, template);
     } catch (error) {
       console.error('PDF Error:', error);
       Alert.alert('PDF Error', String(error));
@@ -381,7 +381,7 @@ function CVCard({ cv, size, onPress }: { cv: CV; size: 'large' | 'small'; onPres
   const handleDownload = async (cvData: CV) => {
   try {
     const t = CV_TEMPLATES.find(tp => tp.id === cvData.template_id) || CV_TEMPLATES[0];
-    await downloadCVAsPDF(cvData, t);
+    await exportCVAsPDF(cvData, t);
   } catch (error) {
     console.error('PDF Error:', error);
     Alert.alert('PDF Error', String(error));

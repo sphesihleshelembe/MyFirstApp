@@ -31,18 +31,19 @@ const handleReset = async () => {
 };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 20, }}>
       <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 20 }}>
-        Reset Password
+        Reset Password :
       </Text>
 
       <TextInput
         placeholder="Enter your email"
+        placeholderTextColor="#666666"
         value={email}
         onChangeText={setEmail}
         style={{
           borderWidth: 1,
-          padding: 10,
+          padding: 12,
           marginBottom: 20,
           borderRadius: 8,
         }}
@@ -51,7 +52,7 @@ const handleReset = async () => {
       <TouchableOpacity
         onPress={handleReset}
         style={{
-          backgroundColor: '#2563eb',
+          backgroundColor: '#0A0A0F',
           padding: 12,
           borderRadius: 8,
         }}

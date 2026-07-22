@@ -25,7 +25,7 @@ import Animated, {
 import { FileText, Plus, Trash2, Edit, Folder, Clock, Layers, Download } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, CV } from '@/lib/supabase';
-import { downloadCVAsPDF } from '@/utils/cvExport';
+import { exportCVAsPDF } from '@/utils/cvExport';
 import { colors, spacing, radius, typography } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -166,7 +166,7 @@ export default function MyCVsScreen() {
                   isFirst={i === 0}
                   onEdit={() => router.push({ pathname: '/(tabs)/create', params: { cvId: cv.id } })}
                   onDelete={() => deleteCV(cv)}
-                  onDownload={() => downloadCVAsPDF(cv)}
+                  onDownload={() => exportCVAsPDF(cv)}
                 />
               </Animated.View>
             ))}

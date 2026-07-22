@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -41,6 +44,24 @@ export default function SettingsScreen() {
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cvCount, setCvCount] = useState(0);
+
+  useFocusEffect(
+  useCallback(() => {
+    const loadCVCount = async () => {
+      if (!user) return;
+
+      const { count } = await supabase
+        .from('cvs')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      setCvCount(count ?? 0);
+    };
+
+    loadCVCount();
+  }, [user])
+);
 
   const handleSignOut = async () => {
     setLoading(true);
@@ -134,17 +155,17 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>CV Options</Text>
           <View style={styles.card}>
-            <SettingRow
-              icon={<FileText color={colors.primaryLight} size={20} />}
-              label="My CVs"
-              desc={`${0} saved CVs`}
-              onPress={() => router.push('/(tabs)/my-cvs')}
-            />
-            <View style={styles.divider} />
+         <SettingRow
+  icon={<FileText color={colors.primaryLight} size={20} />}
+  label="My CVs"
+  desc={`${cvCount} saved CV${cvCount === 1 ? '' : 's'}`}
+  onPress={() => router.push('/(tabs)/my-cvs')}
+/>
+           <View style={styles.divider} />
             <SettingRow
               icon={<Download color={colors.success} size={20} />}
               label="Download Format"
-              desc="HTML (browser printable)"
+              desc="PDF"
               onPress={() => showAlert('Download', 'Open any CV and use the Download button to save as PDF. Open the file in your browser and print to PDF.')}
             />
             <View style={styles.divider} />
@@ -172,14 +193,14 @@ export default function SettingsScreen() {
               icon={<Shield color={colors.primaryLight} size={20} />}
               label="Privacy Policy"
               desc="How we handle your data"
-              onPress={() => openURL('https://cv-craft-ai.vercel.app/privacy-policy')}
+              onPress={() => openURL('https://sites.google.com/view/cvbuilder-privacy-policy/home')}
             />
             <View style={styles.divider} />
             <SettingRow
               icon={<Database color={colors.primaryLight} size={20} />}
               label="Data Deletion Policy"
               desc="Request data removal"
-              onPress={() => openURL('https://cv-craft-ai.vercel.app/data-deletion')}
+              onPress={() => openURL('https://sites.google.com/view/cvbuilder-data-removal/home')}
             />
             <View style={styles.divider} />
             <SettingRow

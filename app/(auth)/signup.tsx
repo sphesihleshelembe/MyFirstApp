@@ -237,11 +237,11 @@ export default function SignupScreen() {
               <Text style={styles.termsText}>
                 By creating an account, you agree to our{' '}
               </Text>
-              <TouchableOpacity onPress={() => Linking.openURL('https://cv-craft-ai.vercel.app/privacy-policy')}>
+              <TouchableOpacity onPress={() => Linking.openURL('https://sites.google.com/view/cvbuilder-privacy-policy/home')}>
                 <Text style={styles.termsLink}>Privacy Policy</Text>
               </TouchableOpacity>
               <Text style={styles.termsText}> and </Text>
-              <TouchableOpacity onPress={() => Linking.openURL('https://cv-craft-ai.vercel.app/data-deletion')}>
+              <TouchableOpacity onPress={() => Linking.openURL('https://sites.google.com/view/cvbuilder-data-removal/home')}>
                 <Text style={styles.termsLink}>Data Deletion Policy</Text>
               </TouchableOpacity>
             </View>

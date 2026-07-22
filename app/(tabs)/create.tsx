@@ -57,6 +57,8 @@ import { generatePDFHtml, triggerPDFDownload } from '@/lib/pdf-generator';
 import { RewardedAdModal } from '@/components/RewardedAdModal';
 import { syncCVsToCloud } from '@/lib/syncCVs';
 import NetInfo from '@react-native-community/netinfo';
+import { exportCVAsPDF } from "@/utils/cvExport";
+
 
 const { width } = Dimensions.get('window');
 
@@ -107,26 +109,36 @@ export default function CreateScreen() {
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // CV completion score: each category contributes a portion toward 100%
-  const completionScore = useMemo(() => {
-    let score = 0;
-    // Personal info: 4 fields × 7% = 28%
-    if (fullName.trim()) score += 7;
-    if (phone.trim()) score += 7;
-    if (email.trim()) score += 7;
-    if (address.trim()) score += 7;
-    // Skills: up to 15% (5% per skill, max 3)
-    score += Math.min(skills.length * 5, 15);
-    // Education: up to 15% (15% for ≥1 entry)
-    if (education.length > 0) score += 15;
-    // Work experience: up to 20% (20% for ≥1 entry)
-    if (workExp.length > 0) score += 20;
-    // Summary: 12%
-    if (summary.trim().length >= 20) score += 12;
-    // References: 5%
-    if (references.length > 0) score += 5;
-    // Template chosen (non-default or explicitly set): 0 — always has a value, give credit for reaching template step
-    return Math.min(score, 100);
-  }, [fullName, phone, email, address, skills, education, workExp, summary, references]);
+ const completionScore = useMemo(() => {
+  let score = 0;
+
+  // Required information only
+  if (fullName.trim()) score += 15;
+  if (phone.trim()) score += 10;
+  if (email.trim()) score += 10;
+
+  // Professional summary
+  if (summary.trim().length >= 20) score += 15;
+
+  // At least one skill
+  if (skills.length > 0) score += 15;
+
+  // At least one education entry
+  if (education.length > 0) score += 15;
+
+  // At least one work experience
+  if (workExp.length > 0) score += 20;
+
+  return score;
+}, [
+  fullName,
+  phone,
+  email,
+  summary,
+  skills,
+  education,
+  workExp,
+]);
 
   useEffect(() => {
     if (cvId) {
@@ -247,7 +259,7 @@ export default function CreateScreen() {
     };
   }, [autoSave]);
 
-  const saveCV = async () => {
+   const saveCV = async () => {
     if (!user) return;
     setSaving(true);
     const payload = {
@@ -267,21 +279,60 @@ export default function CreateScreen() {
     };
 
     let error;
-    if (savedId) {
-      const res = await supabase.from('cvs').update(payload).eq('id', savedId);
-      error = res.error;
-    } else {
-      const res = await supabase.from('cvs').insert(payload).select('id').single();
-      error = res.error;
-      if (!error && res.data) setSavedId(res.data.id);
-    }
+let currentId = savedId;
+
+if (savedId) {
+  const res = await supabase
+    .from("cvs")
+    .update(payload)
+    .eq("id", savedId);
+
+  error = res.error;
+} else {
+  const res = await supabase
+    .from("cvs")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  error = res.error;
+
+  if (!error && res.data) {
+    currentId = res.data.id;
+    setSavedId(currentId);
+  }
+}
 
     setSaving(false);
     if (error) {
       Alert.alert('Error', 'Failed to save CV. Please try again.');
     } else {
       await clearDraftCV();
-      Alert.alert('Saved!', 'Your CV has been saved successfully.');
+     Alert.alert(
+  "CV Saved",
+  "Your CV has been saved successfully.\n\nWould you also like to save a PDF copy to your device?",
+  [
+    {
+      text: "Not Now",
+      style: "cancel",
+    },
+    {
+      text: "Save PDF",
+onPress: async () => {
+  const now = new Date().toISOString();
+
+  const cv: CV = {
+    id: currentId ?? "",
+    created_at: now,
+    updated_at: payload.updated_at,
+    ...payload,
+  };
+
+  await exportCVAsPDF(cv);
+},
+    },
+  ]
+);
     }
   };
 
