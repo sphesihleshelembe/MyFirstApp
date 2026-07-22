@@ -86,8 +86,13 @@ export default function ResetPassword() {
 
   if (loading) {
     return (
+<<<<<<< HEAD
         <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar style="dark" />
+=======
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar style="light" />
+>>>>>>> 38dff9868f38484af06877aa9c12e3f6b87ea217
         <View style={styles.centered}>
           <ActivityIndicator color={colors.primary} size="large" />
           <Text style={styles.loadingText}>Verifying reset link...</Text>
@@ -112,12 +117,6 @@ export default function ResetPassword() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-    <StatusBar
-  style="light"
-  translucent={false}
-  backgroundColor="#0A0A0F"
-/>
       <View style={styles.content}>
         <View style={styles.iconBg}>
           <Lock color={colors.primaryLight} size={28} />
