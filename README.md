@@ -1,4 +1,4 @@
-﻿# 📄 CV Builder
+# 📄 CV Builder
 
 > Build professional resumes anytime, anywhere.
 
