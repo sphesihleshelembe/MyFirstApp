@@ -5,11 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import { colors, radius } from '@/constants/theme';
 import { usePathname } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 
 export default function TabsLayout() {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
   const { session, loading } = useAuth();
 
   useEffect(() => {
@@ -40,7 +42,11 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+  ...styles.tabBar,
+  height: 64 + insets.bottom,
+  paddingBottom: insets.bottom + 8,
+},
         tabBarActiveTintColor: colors.primaryLight,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: styles.tabLabel,
@@ -110,10 +116,12 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     elevation: 0,
   },
+
   tabBarBg: {
     flex: 1,
     backgroundColor: colors.surface,
   },
+
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',

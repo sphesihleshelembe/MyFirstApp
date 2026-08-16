@@ -84,22 +84,17 @@ export default function ResetPassword() {
     setTimeout(() => router.replace('/(auth)/login'), 1500);
   };
 
-  if (loading) {
-    return (
-<<<<<<< HEAD
-        <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar style="dark" />
-=======
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar style="light" />
->>>>>>> 38dff9868f38484af06877aa9c12e3f6b87ea217
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={styles.loadingText}>Verifying reset link...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+if (loading) {
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar style="light" />
+      <View style={styles.centered}>
+        <ActivityIndicator color={colors.primary} size="large" />
+        <Text style={styles.loadingText}>Verifying reset link...</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
 
   if (success) {
     return (
@@ -116,8 +111,10 @@ export default function ResetPassword() {
     );
   }
 
-  return (
-      <View style={styles.content}>
+return (
+  <SafeAreaView style={styles.container} edges={['top']}>
+    <StatusBar style="light" />
+    <View style={styles.content}>
         <View style={styles.iconBg}>
           <Lock color={colors.primaryLight} size={28} />
         </View>
