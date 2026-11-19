@@ -120,12 +120,6 @@ git clone https://github.com/sphesihleshelembe/CVbuilder.git
 cd CVbuilder
 ```
 
-Navigate to the project
-
-```bash
-cd cvbuilder
-```
-
 Install dependencies
 
 ```bash
