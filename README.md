@@ -78,25 +78,24 @@ Designed with simplicity and performance in mind, CV Builder helps job seekers c
 
 ---
 
-## 🏗 Project Structure
+## 📂 Project Structure
 
-```
+```text
 CVBuilder/
-│
 ├── app/
-├── assets/
+├── android/
 ├── components/
-├── constants/
+├── context/
 ├── hooks/
+├── lib/
 ├── services/
-├── types/
-├── utils/
+│   └── export/
 ├── supabase/
-├── package.json
-└── README.md
+├── utils/
+├── assets/
+├── README.md
+└── package.json
 ```
-
----
 
 ## 🚀 Getting Started
 
