@@ -1,5 +1,12 @@
 # 📄 CV Builder
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-green?logo=android" />
+  <img src="https://img.shields.io/badge/Framework-React_Native-blue?logo=react" />
+  <img src="https://img.shields.io/badge/Expo-54-black?logo=expo" />
+  <img src="https://img.shields.io/badge/Language-TypeScript-blue?logo=typescript" />
+</p>
+
 > Build professional resumes anytime, anywhere.
 
 CV Builder is a modern Android application developed by **Shelembe Studios** that enables users to create, manage, and export professional CVs directly from their mobile device. The application provides an intuitive interface for organizing personal information, education, work experience, skills, certifications, and other essential resume sections while allowing users to generate polished PDF documents suitable for job applications.
