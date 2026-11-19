@@ -25,9 +25,14 @@ Designed with simplicity and performance in mind, CV Builder helps job seekers c
 
 ---
 
-## 📱 Screenshots
-
-> Screenshots will be added soon.
+<p align="center">
+  <img src="screenshots/HomeScreen.jpg" width="200" alt="CV Builder home screen" />
+  <img src="screenshots/Templates.jpeg" width="200" alt="CV templates" />
+  <img src="screenshots/Personal.jpeg" width="200" alt="Personal information section" />
+  <img src="screenshots/CV_Analyser.jpg" width="200" alt="CV analyser" />
+  <img src="screenshots/JobMatchCheck.jpg" width="200" alt="Job match checker" />
+  <img src="screenshots/ProfSummary.jpg" width="200" alt="Professional summary" />
+</p>
 
 ---
 
