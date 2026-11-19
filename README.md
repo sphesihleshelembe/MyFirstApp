@@ -116,7 +116,8 @@ Before running the project, ensure the following are installed:
 Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/cvbuilder.git
+git clone https://github.com/sphesihleshelembe/CVbuilder.git
+cd CVbuilder
 ```
 
 Navigate to the project
